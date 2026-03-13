@@ -38,7 +38,7 @@ async def verify_supabase_token(token: str):
             detail="Invalid authentication token",
         )
 
-
+# TODO: separate authentication and authorization
 def require_user(
     role: Optional[Role] = None,
     roles: Optional[List[Role]] = None,

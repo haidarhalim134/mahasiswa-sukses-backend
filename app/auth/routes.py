@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.schemas import RegisterRequest, LoginRequest, ResetPasswordRequest
@@ -28,3 +29,28 @@ async def reset_password_endpoint(
     data: ResetPasswordRequest
 ):
     return await reset_password(data.email)
+
+from fastapi.responses import FileResponse, HTMLResponse
+
+@router.get("/reset-password-page", response_class=HTMLResponse)
+async def reset_password_page():
+    return FileResponse("./app/templates/reset_password.html")
+
+class UpdatePasswordRequest(BaseModel):
+    access_token: str
+    password: str
+
+
+@router.post("/update-password")
+async def update_password(data: UpdatePasswordRequest):
+    from app.core.supabase import supabase
+    supabase.auth.set_session(
+        data.access_token,
+        data.access_token
+    )
+
+    supabase.auth.update_user({
+        "password": data.password
+    })
+
+    return {"message": "Password updated"}
