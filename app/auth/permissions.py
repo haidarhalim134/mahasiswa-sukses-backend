@@ -1,8 +1,11 @@
+from typing import List, Optional
+from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.schemas import Visibility
 from app.core.supabase import supabase
 from app.db.session import get_db
 from app.core.config import settings
@@ -11,7 +14,6 @@ from app.users.models import Role
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
-
 
 async def verify_supabase_token(token: str):
 
@@ -37,32 +39,50 @@ async def verify_supabase_token(token: str):
         )
 
 
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db),
+def require_user(
+    role: Optional[Role] = None,
+    roles: Optional[List[Role]] = None,
+    visibility: Visibility = Visibility.public,
 ):
 
-    user_id = await verify_supabase_token(token)
+    async def dependency(
+        token: str = Depends(oauth2_scheme),
+        db: AsyncSession = Depends(get_db),
+        user_id: Optional[str] = None,
+    ):
 
-    user = await get_user_by_id(db, user_id)
+        user_id_from_token = await verify_supabase_token(token)
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-        )
+        current_user = await get_user_by_id(db, UUID(user_id_from_token))
 
-    return user
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
 
+        if role and current_user.role != role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient role",
+            )
 
-async def require_admin(
-    current_user=Depends(get_current_user),
-):
+        if roles and current_user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient role",
+            )
 
-    if current_user.role != Role.admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Requires admin role",
-        )
+        if current_user.role == Role.admin:
+            return current_user
 
-    return current_user
+        if visibility == Visibility.private:
+            if user_id != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Cannot access other users",
+                )
+
+        return current_user
+
+    return dependency

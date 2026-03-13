@@ -1,9 +1,10 @@
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.auth.permissions import get_current_user, require_admin
+from app.auth.permissions import require_user
 import app.auth.routes as auth
 from app.core.config import settings
+from app.users.models import Role
 
 app = FastAPI(title="Mahasiswa Sukses Backend")
 
@@ -26,7 +27,7 @@ async def health():
 
 @app.get("/api/v1/me")
 async def get_profile(
-    current_user = Depends(get_current_user)
+    current_user = Depends(require_user())
 ):
     return {
         "message": "Authenticated user",
@@ -38,7 +39,7 @@ async def get_profile(
 
 @app.get("/api/v1/admin/dashboard")
 async def admin_dashboard(
-    current_user = Depends(require_admin)
+    current_user = Depends(require_user(role=Role.admin))
 ):
     return {
         "message": "Admin access granted",

@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from enum import Enum
 
 # add nim later
 class RegisterRequest(BaseModel):
@@ -12,3 +13,7 @@ class LoginRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     email: EmailStr
+
+class Visibility(str, Enum):
+    public = "public"
+    private = "private"
