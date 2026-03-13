@@ -61,6 +61,10 @@ def require_user(
                 detail="User not found",
             )
 
+        if current_user.role == Role.admin:
+            return current_user
+
+
         if role and current_user.role != role:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -73,11 +77,8 @@ def require_user(
                 detail="Insufficient role",
             )
 
-        if current_user.role == Role.admin:
-            return current_user
-
         if visibility == Visibility.private:
-            if user_id != current_user.id:
+            if user_id and user_id != current_user.id:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Cannot access other users",
