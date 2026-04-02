@@ -5,6 +5,9 @@ from app.auth.permissions import require_user
 import app.auth.routes as auth
 from app.core.config import settings
 from app.users.models import Role
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI(title="Mahasiswa Sukses Backend")
 
