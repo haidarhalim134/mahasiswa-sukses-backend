@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.schemas import RegisterRequest, LoginRequest, ResetPasswordRequest
+from app.auth.schemas import RegisterRequest, LoginRequest, ResetPasswordRequest, LoginResponse
 from app.auth.service import register_user, login_user, reset_password
 from app.db.session import get_db
 
@@ -14,10 +14,11 @@ async def register(
     data: RegisterRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    return await register_user(data, db)
+    await register_user(data, db)
+    return Response(status_code=200)
 
 
-@router.post("/login")
+@router.post("/login", response_model=LoginResponse)
 async def login(
     data: LoginRequest
 ):
@@ -28,7 +29,8 @@ async def login(
 async def reset_password_endpoint(
     data: ResetPasswordRequest
 ):
-    return await reset_password(data.email)
+    await reset_password(data.email)
+    return Response(status_code=200)
 
 from fastapi.responses import FileResponse, HTMLResponse
 
@@ -53,4 +55,4 @@ async def update_password(data: UpdatePasswordRequest):
         "password": data.password
     })
 
-    return {"message": "Password updated"}
+    return Response(status_code=200)

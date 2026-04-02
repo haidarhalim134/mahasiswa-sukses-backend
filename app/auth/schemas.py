@@ -5,6 +5,8 @@ from enum import Enum
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
+    phone_number: str
+    nim: str
 
 
 class LoginRequest(BaseModel):
@@ -13,6 +15,11 @@ class LoginRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     email: EmailStr
+
+class LoginResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
 
 class Visibility(str, Enum):
     public = "public"

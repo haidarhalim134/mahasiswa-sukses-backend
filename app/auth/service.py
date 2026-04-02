@@ -27,7 +27,7 @@ async def register_user(data: RegisterRequest, db: AsyncSession):
         email=data.email,
     )
 
-    return {"message": "User registered"}
+    return
 
 
 async def login_user(data: LoginRequest):
@@ -57,6 +57,4 @@ async def reset_password(email: str):
         }
     )
 
-    return {
-        "message": "Password reset email sent"
-    }
+    return
