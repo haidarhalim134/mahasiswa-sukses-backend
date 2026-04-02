@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.schemas import RegisterRequest, LoginRequest, ResetPasswordRequest, LoginResponse
+from app.auth.schemas import RegisterRequest, LoginRequest, ResetPasswordRequest, LoginResponse, UpdatePasswordRequest
 from app.auth.service import register_user, login_user, reset_password
 from app.db.session import get_db
 
@@ -37,10 +37,6 @@ from fastapi.responses import FileResponse, HTMLResponse
 @router.get("/reset-password-page", response_class=HTMLResponse)
 async def reset_password_page():
     return FileResponse("./app/templates/reset_password.html")
-
-class UpdatePasswordRequest(BaseModel):
-    access_token: str
-    password: str
 
 
 @router.post("/update-password")
