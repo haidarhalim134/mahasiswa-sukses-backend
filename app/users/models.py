@@ -1,8 +1,9 @@
 from typing import List
 import enum
 import uuid
+from datetime import date
 
-from sqlalchemy import String, Enum
+from sqlalchemy import String, Enum, Date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -34,4 +35,26 @@ class User(Base):
         Enum(Role, native_enum=False),
         default=Role.student,
         nullable=False,
+    )
+
+    phone_number: Mapped[str] = mapped_column(
+        String,
+        nullable=True,
+    )
+
+    nim: Mapped[str] = mapped_column(
+        String,
+        unique=True,
+        index=True,
+        nullable=True,
+    )
+
+    full_name: Mapped[str] = mapped_column(
+        String,
+        nullable=True,
+    )
+
+    birth_date: Mapped[date] = mapped_column(
+        Date,
+        nullable=True,
     )

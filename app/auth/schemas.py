@@ -1,12 +1,14 @@
+from datetime import date
 from pydantic import BaseModel, EmailStr, Field
 from enum import Enum
 
-# add nim later
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
     phone_number: str
     nim: str
+    full_name: str
+    birth_date: date
 
 
 class LoginRequest(BaseModel):
