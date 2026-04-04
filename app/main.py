@@ -28,7 +28,7 @@ async def health():
     return {"status": "ok"}
 
 
-@app.get("/api/v1/me")
+@app.get("/api/v1/me", include_in_schema=False)
 async def get_profile(
     current_user = Depends(require_user())
 ):
@@ -40,7 +40,7 @@ async def get_profile(
     }
 
 
-@app.get("/api/v1/admin/dashboard")
+@app.get("/api/v1/admin/dashboard", include_in_schema=False)
 async def admin_dashboard(
     current_user = Depends(require_user(role=Role.admin))
 ):
