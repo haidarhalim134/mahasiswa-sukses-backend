@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,7 +22,13 @@ async def register(
 async def login(
     data: LoginRequest
 ):
-    return await login_user(data)
+    try:
+        return await login_user(data)
+    except:
+        raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials."
+            )
 
 
 @router.post("/reset-password")
@@ -42,10 +48,16 @@ async def reset_password_page():
 @router.post("/update-password")
 async def update_password(data: UpdatePasswordRequest):
     from app.core.supabase import supabase
-    supabase.auth.set_session(
-        data.access_token,
-        data.access_token
-    )
+    try:
+        supabase.auth.set_session(
+            data.access_token,
+            data.access_token
+        )
+    except:
+        raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials."
+            )
 
     supabase.auth.update_user({
         "password": data.password
