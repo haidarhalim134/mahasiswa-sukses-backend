@@ -55,7 +55,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 @router.get("/reset-password-page", response_class=HTMLResponse)
 async def reset_password_page():
     """
-    Page: <endpoint internal backend>
+    Page: (endpoint internal backend)
     """
     return FileResponse("./app/templates/reset_password.html")
 
@@ -63,7 +63,7 @@ async def reset_password_page():
 @router.post("/update-password")
 async def update_password(data: UpdatePasswordRequest):
     """
-    Page: <endpoint internal backend>
+    Page: (endpoint internal backend)
     """
     from app.core.supabase import supabase
     try:
