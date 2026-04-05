@@ -1,42 +1,46 @@
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 
-from app.modules.community.schemas import CommunityStats, ForumPostCreate, ForumPostRead, ForumTab
+from app.modules.community.schemas import CommunityStats, ForumFeedRequest, ForumPostCreate, ForumPostRead, ForumTab, PostComment
 
 
 router = APIRouter(prefix="/api/v1/community", tags=["community"])
 
-@router.get("/forum/stats", response_model=CommunityStats, tags=["Forum"])
+@router.get("/stats", response_model=CommunityStats)
 async def get_community_stats():
-    """Returns the '1,234 mahasiswa online' count."""
+    """Endpoint untuk mengambil estimasi jumlah user online"""
     raise NotImplementedError
 
-@router.get("/forum/feed", response_model=list[ForumPostRead], tags=["Forum"])
-async def get_forum_feed(tab: ForumTab = ForumTab.POSTINGAN):
+@router.post("/feed", response_model=list[ForumPostRead])
+async def get_forum_feed(filter: ForumFeedRequest):
     """
-    Returns the feed for either 'Postingan' or 'Ruang Belajar'.
-    Includes tags like #Algoritma or #Tips.
+    Endpoint untuk mengambil list postingan
     """
     raise NotImplementedError
 
 # 2. Interactions (Postingan)
-@router.post("/forum/posts", response_model=ForumPostRead, status_code=201, tags=["Forum"])
+@router.post("/posts", response_model=ForumPostRead, status_code=201)
 async def create_post(post: ForumPostCreate):
-    """Triggered by the '+' floating action button."""
+    """Endpoint untuk membuat post baru"""
     raise NotImplementedError
 
-@router.post("/forum/posts/{post_id}/like", tags=["Forum"])
+@router.post("/posts/{post_id}/comment")
+async def comment_post(post_id: int, comment: PostComment):
+    """Endpoint untuk mengomentari sebuah postingan"""
+    raise NotImplementedError
+
+@router.post("/posts/{post_id}/like")
 async def like_post(post_id: int):
-    """Toggles the heart icon interaction."""
+    """Endpoint untuk toggle tombol like (like<->dislike) sebuah post"""
     raise NotImplementedError
 
 # 3. Ruang Belajar (Study Rooms)
-@router.post("/forum/rooms/{room_id}/join", tags=["Forum"])
+@router.post("/rooms/{room_id}/join")
 async def join_study_room(room_id: int):
-    """Handles the 'Join' button for study sessions."""
+    """Endpoint untuk join sebuah study room"""
     raise NotImplementedError
 
-@router.get("/forum/posts/{post_id}/comments", tags=["Forum"])
+@router.get("/posts/{post_id}/comments")
 async def get_post_comments(post_id: int):
-    """Fetches the discussion thread for a specific post."""
+    """Endpoint untuk mengambil list komentar sebuah posting"""
     raise NotImplementedError

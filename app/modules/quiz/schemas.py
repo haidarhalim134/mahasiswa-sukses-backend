@@ -44,5 +44,8 @@ class QuizResult(BaseModel):
     score_text: str  # e.g., "5 dari 5 soal benar"
     points_gained: int
     streak_bonus: int
-    certificate_url: Optional[str] = None
+    certificate_id: Optional[str] = None
 
+class QuizSummary(BaseModel):
+    total_quiz: int
+    total_quiz_completed: int

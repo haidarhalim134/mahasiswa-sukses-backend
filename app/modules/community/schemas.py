@@ -17,6 +17,7 @@ class ForumAuthor(BaseModel):
     avatar_url: Optional[str] = None
 
 class ForumPostBase(BaseModel):
+    title: str
     content: str
     tags: list[str]
 
@@ -31,10 +32,16 @@ class ForumPostRead(ForumPostBase):
     comments_count: int
 
 class StudyRoomRead(ForumPostRead):
-    title: str
     current_participants: int
     max_participants: int
     is_joined: bool = False
 
 class CommunityStats(BaseModel):
     online_count: int
+
+class ForumFeedRequest(BaseModel):
+    tab: ForumTab = ForumTab.POSTINGAN
+    tag: Optional[list[str]] = None
+
+class PostComment(BaseModel):
+    comment: str

@@ -16,10 +16,10 @@ class TaskPriority(str, Enum):
     SEDANG = "Sedang"
     RENDAH = "Rendah"
 
-class AchievementType(str, Enum):
-    QUEST = "Quest"
-    FORUM = "Forum"
-    STREAK = "Streak"
+class TaskProgress(str, Enum):
+    TODO = "Todo"
+    ON_PROGRESS = "Proses"
+    DONE = "Selesai"
 
 # --- Schemas ---
 
@@ -36,5 +36,11 @@ class TaskCreate(TaskBase):
 class TaskRead(TaskBase):
     id: int
     is_completed: bool = False
+
+class TaskSummary(BaseModel):
+    task_completed: int
+    todo: int
+    on_progress: int
+    high_priority: int
 
 

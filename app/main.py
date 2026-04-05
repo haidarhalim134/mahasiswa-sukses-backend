@@ -7,6 +7,7 @@ import app.modules.community.routes as community
 import app.modules.gamification.routes as gamification
 import app.modules.progress_tracking.routes as progress_tracking
 import app.modules.quiz.routes as quiz
+import app.modules.certificate.routes as certificate
 
 from app.auth.permissions import require_user
 from app.core.config import settings
@@ -33,6 +34,7 @@ app.include_router(community.router)
 app.include_router(gamification.router)
 app.include_router(progress_tracking.router)
 app.include_router(quiz.router)
+app.include_router(certificate.router)
 
 @app.get("/")
 async def health():
