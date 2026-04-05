@@ -1,8 +1,14 @@
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.auth.permissions import require_user
 import app.auth.routes as auth
+import app.users.routes as user
+import app.modules.community.routes as community
+import app.modules.gamification.routes as gamification
+import app.modules.progress_tracking.routes as progress_tracking
+import app.modules.quiz.routes as quiz
+
+from app.auth.permissions import require_user
 from app.core.config import settings
 from app.users.models import Role
 from dotenv import load_dotenv
@@ -22,6 +28,11 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(user.router)
+app.include_router(community.router)
+app.include_router(gamification.router)
+app.include_router(progress_tracking.router)
+app.include_router(quiz.router)
 
 @app.get("/")
 async def health():
