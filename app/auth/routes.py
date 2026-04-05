@@ -18,20 +18,21 @@ async def register(
     Page: Sign-up.
     Endpoint untuk melakukan pendaftaran pengguna baru.
     """
-    await register_user(data, db)
+    await register_user(db, data)
     return Response(status_code=200)
 
 
 @router.post("/login", response_model=LoginResponse)
 async def login(
-    data: LoginRequest
+    data: LoginRequest,
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Page: Sign-in.
     Endpoint untuk melakukan autentikasi pengguna.
     """
     try:
-        return await login_user(data)
+        return await login_user(db, data)
     except:
         raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

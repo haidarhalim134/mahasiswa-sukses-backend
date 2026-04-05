@@ -1,4 +1,6 @@
+from datetime import date
 from typing import Optional
+from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field
 
 class UserStats(BaseModel):
@@ -8,9 +10,12 @@ class UserStats(BaseModel):
     completion_percentage: float
 
 class UserProfile(BaseModel):
-    full_name: str
-    email: EmailStr
-    avatar_url: Optional[str] = None
+    id: UUID
+    email: str
+    full_name: Optional[str]
+    phone_number: Optional[str]
+    nim: Optional[str]
+    birth_date: Optional[date]
 
 class ProfileUpdate(BaseModel):
     full_name: Optional[str] = None

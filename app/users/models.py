@@ -1,60 +1,51 @@
-from typing import List
-import enum
 import uuid
 from datetime import date
+from typing import Optional
+from enum import Enum
 
-from sqlalchemy import String, Enum, Date
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
-
-from app.db.base import Base
+from sqlmodel import SQLModel, Field
 
 
-class Role(str, enum.Enum):
+class Role(str, Enum):
     student = "student"
     admin = "admin"
 
 
-class User(Base):
+class User(SQLModel, table=True):
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
         primary_key=True,
         index=True
     )
 
-    email: Mapped[str] = mapped_column(
-        String,
-        unique=True,
+    email: str = Field(
         index=True,
-        nullable=False,
+        unique=True,
+        nullable=False
     )
 
-    role: Mapped[Role] = mapped_column(
-        Enum(Role, native_enum=False),
+    role: Role = Field(
         default=Role.student,
-        nullable=False,
+        nullable=False
     )
 
-    phone_number: Mapped[str] = mapped_column(
-        String,
-        nullable=True,
+    phone_number: Optional[str] = Field(
+        default=None,
+        nullable=True
     )
 
-    nim: Mapped[str] = mapped_column(
-        String,
-        unique=True,
+    nim: Optional[str] = Field(
+        default=None,
         index=True,
-        nullable=True,
+        unique=True
     )
 
-    full_name: Mapped[str] = mapped_column(
-        String,
-        nullable=True,
+    full_name: Optional[str] = Field(
+        default=None
     )
 
-    birth_date: Mapped[date] = mapped_column(
-        Date,
-        nullable=True,
+    birth_date: Optional[date] = Field(
+        default=None
     )

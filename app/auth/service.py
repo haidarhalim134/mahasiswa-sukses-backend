@@ -2,13 +2,13 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from app.auth.schemas import LoginRequest, RegisterRequest
+from app.auth.schemas import LoginRequest, LoginResponse, RegisterRequest
 from app.core.supabase import supabase
-from app.users.service import create_user_profile
+from app.users.service import create_user_profile, get_user_by_id
 
 
 
-async def register_user(data: RegisterRequest, db: AsyncSession):
+async def register_user(db: AsyncSession, data: RegisterRequest):
 
     res = supabase.auth.sign_up(
         {
@@ -34,7 +34,7 @@ async def register_user(data: RegisterRequest, db: AsyncSession):
     return
 
 
-async def login_user(data: LoginRequest):
+async def login_user(db: AsyncSession, data: LoginRequest):
 
     res = supabase.auth.sign_in_with_password(
         {
@@ -45,11 +45,16 @@ async def login_user(data: LoginRequest):
 
     assert res.session != None
 
-    return {
-        "access_token": res.session.access_token,
-        "refresh_token": res.session.refresh_token,
-        "token_type": "bearer"
-    }
+    user_data = await get_user_by_id(db, UUID(res.session.user.id))
+
+    assert user_data != None
+
+    return LoginResponse(
+        access_token=res.session.access_token,
+        refresh_token=res.session.refresh_token,
+        token_type="bearer",
+        user=user_data
+    )
 
 
 async def reset_password(email: str):
