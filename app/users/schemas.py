@@ -22,3 +22,6 @@ class ProfileUpdate(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = Field(None, min_length=8)
     confirm_password: Optional[str] = None
+
+class SettingsUpdate(BaseModel):
+    notifications: Optional[bool] = None

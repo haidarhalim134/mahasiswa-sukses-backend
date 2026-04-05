@@ -1,34 +1,52 @@
+from fastapi import APIRouter, File, UploadFile, Depends
 
-
-from fastapi import APIRouter, File, UploadFile
-
-from app.users.schemas import ProfileUpdate, UserProfile, UserStats
+from app.auth.permissions import get_current_user
+from app.users.models import User
+from app.users.schemas import ProfileUpdate, SettingsUpdate, UserProfile, UserStats
 
 
 router = APIRouter(prefix="/api/v1/user", tags=["user"])
 
+
 @router.get("/stats", response_model=UserStats)
-async def get_user_stats():
-    """Returns points, ranking, and current streak seen on the Home screen."""
+async def get_user_stats(
+    current_user: User = Depends(get_current_user),
+):
+    """Endpoint untuk mengambil data stats homescreen"""
     raise NotImplementedError
+
 
 @router.get("/profile", response_model=UserProfile)
-async def get_my_profile():
-    """Returns the current user's profile info for the 'Pengaturan' screen."""
+async def get_my_profile(
+    current_user: User = Depends(get_current_user),
+):
+    """Endpoint untuk mengambil data profile user"""
     raise NotImplementedError
+
 
 @router.post("/profile", response_model=UserProfile)
-async def update_profile(data: ProfileUpdate):
-    """Updates profile details from the 'Edit Profile' screen."""
+async def update_profile(
+    data: ProfileUpdate,
+    current_user: User = Depends(get_current_user),
+):
+    """Endpoint untuk mengupdate data profile user"""
     raise NotImplementedError
+
 
 @router.post("/profile/avatar")
-async def upload_avatar(file: UploadFile = File(...)):
-    """Handles 'Ganti Foto Profil' action."""
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Endpoint untuk memperbarui avatar user"""
     raise NotImplementedError
 
+
 # 3. Preferences & Account
-@router.post("/settings/notifications")
-async def toggle_notifications(settings: bool):
+@router.post("/settings")
+async def update_settings(
+    settings: SettingsUpdate,
+    current_user: User = Depends(get_current_user),
+):
     """Toggles the 'Notifikasi' switch in the Preferensi section."""
     raise NotImplementedError
