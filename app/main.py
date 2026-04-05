@@ -9,7 +9,7 @@ import app.modules.progress_tracking.routes as progress_tracking
 import app.modules.quiz.routes as quiz
 import app.modules.certificate.routes as certificate
 
-from app.auth.permissions import require_user
+from app.auth.permissions import get_current_user, require_user
 from app.core.config import settings
 from app.users.models import Role
 from dotenv import load_dotenv
@@ -43,7 +43,7 @@ async def health():
 
 @app.get("/api/v1/me", include_in_schema=False)
 async def get_profile(
-    current_user = Depends(require_user())
+    current_user = Depends(get_current_user)
 ):
     return {
         "message": "Authenticated user",
