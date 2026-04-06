@@ -3,6 +3,8 @@ from datetime import date
 from typing import Optional
 from enum import Enum
 
+from sqlalchemy import Column, String
+
 from sqlmodel import SQLModel, Field
 
 
@@ -28,7 +30,7 @@ class User(SQLModel, table=True):
 
     role: Role = Field(
         default=Role.student,
-        nullable=False
+        sa_column=Column(String, nullable=False)
     )
 
     phone_number: Optional[str] = Field(
@@ -43,9 +45,11 @@ class User(SQLModel, table=True):
     )
 
     full_name: Optional[str] = Field(
-        default=None
+        default=None,
+        nullable=True,
     )
 
     birth_date: Optional[date] = Field(
-        default=None
+        default=None,
+        nullable=True,
     )
