@@ -1,7 +1,7 @@
-fastapi.
+fastapi
 uvicorn[standard]
 sqlalchemy
-asyncpg0
+asyncpg
 alembic1
 pydantic-settings
 pydantic[email]
