@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Body, Depends
 
-from app.modules.community.schemas import CommunityStats, ForumFeedRequest, ForumPostCreate, ForumPostRead, ForumTab, PostComment
+from app.modules.community.schemas import CommunityStats, ForumAuthor, ForumFeedRequest, ForumPostCreate, ForumPostRead, ForumTab, PostComment
 from app.auth.permissions import get_current_user
 from app.users.models import User
 
@@ -66,7 +66,7 @@ async def join_study_room(
     raise NotImplementedError
 
 
-@router.get("/posts/{post_id}/comments")
+@router.get("/posts/{post_id}/comments", response_model=list[PostComment])
 async def get_post_comments(
     post_id: int,
     current_user: User = Depends(get_current_user),

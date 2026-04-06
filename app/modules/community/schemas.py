@@ -124,11 +124,16 @@ class ForumFeedRequest(BaseModel):
 
 
 class PostComment(BaseModel):
+    author: ForumAuthor
     comment: str
 
     model_config = {
         "json_schema_extra": {
             "example": {
+                "author": {
+                    "name": "Jane Doe",
+                    "avatar_url": None
+                },
                 "comment": "Nice post!"
             }
         }
