@@ -1,4 +1,5 @@
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 import app.auth.routes as auth
@@ -13,6 +14,8 @@ from app.auth.permissions import get_current_user, require_user
 from app.core.config import settings
 from app.users.models import Role
 from dotenv import load_dotenv
+import traceback
+import os
 
 load_dotenv()
 
@@ -27,6 +30,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    response = {"error": "Internal Server Error"}
+
+    if settings.show_error_details:
+        response["error_name"] = exc.__class__.__name__
+        response["detail"] = str(exc)
+        response["traceback"] = traceback.format_exc()
+
+    return JSONResponse(status_code=500, content=response)
 
 app.include_router(auth.router)
 app.include_router(user.router)

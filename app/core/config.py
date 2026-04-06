@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     database_url: str
     supabase_url: str
     supabase_key: str
+    show_error_details: bool
 
 
 settings = Settings()
