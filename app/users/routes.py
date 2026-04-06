@@ -1,4 +1,5 @@
-from fastapi import APIRouter, File, UploadFile, Depends
+from uuid import UUID
+from fastapi import APIRouter, File, Response, UploadFile, Depends
 
 from app.auth.permissions import get_current_user
 from app.users.models import User
@@ -49,4 +50,20 @@ async def update_settings(
     current_user: User = Depends(get_current_user),
 ):
     """Toggles the 'Notifikasi' switch in the Preferensi section."""
+    raise NotImplementedError
+
+@router.get(
+    "/avatar/{user_id}",
+    responses = {
+        200: {
+            "content": {"image/png": {}}
+        }
+    },
+    response_class=Response
+)
+async def get_avatar(
+    user_id: UUID, 
+    current_user: User = Depends(get_current_user),
+):
+    """Endpoint untuk mengambil avatar user tertentu"""
     raise NotImplementedError

@@ -13,7 +13,6 @@ class ForumTab(str, Enum):
 
 class ForumAuthor(BaseModel):
     name: str
-    initials: str  # e.g., "AP" or "MA"
     avatar_url: Optional[str] = None
 
 class ForumPostBase(BaseModel):
