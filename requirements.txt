@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 sqlalchemy
 asyncpg
-alembic1
+alembic
 pydantic-settings
 pydantic[email]
 email-validator
