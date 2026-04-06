@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from fastapi.responses import FileResponse
 
 from app.auth.permissions import get_current_user
@@ -9,7 +9,16 @@ from app.users.models import User
 
 router = APIRouter(prefix="/api/v1/certificate", tags=["certificate"])
 
-@router.get("/{certificate_id}", response_class=FileResponse)
+@router.get(
+    "/{certificate_id}", 
+    responses={
+        200: {
+            "content": {"application/pdf": {}},
+            "description": "Returns a PDF file"
+        }
+    },
+    response_class=Response
+)
 async def download_certificate(
     certificate_id: str,
     current_user: User = Depends(get_current_user)
