@@ -15,12 +15,13 @@ from app.users.models import Role, User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
-async def verify_supabase_token(token: str):
+def verify_supabase_token(token: str):
 
     try:
         payload = supabase.auth.get_claims(token)
 
         assert payload != None
+        assert 'sub' in payload['claims']
 
         user_id: str = payload['claims']['sub']
 
@@ -42,7 +43,7 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    user_id = await verify_supabase_token(token)  # raises 401 on bad token
+    user_id = verify_supabase_token(token)  # raises 401 on bad token
     current_user = await get_user_by_id(db, UUID(user_id))
     if not current_user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
@@ -55,7 +56,7 @@ def require_user(
     roles: Optional[List[Role]] = None,
     visibility: Visibility = Visibility.public,
 ):
-    async def dependency(
+    def dependency(
         user_id: Optional[str] = None,
         current_user: User = Depends(get_current_user),  # authn handled here
     ) -> User:
