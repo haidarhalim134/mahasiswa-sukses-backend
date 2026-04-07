@@ -1,4 +1,4 @@
-from sqlalchemy.orm import DeclarativeBase
+from sqlmodel import SQLModel
 from sqlalchemy import MetaData
 
 POSTGRES_INDEXES_NAMING_CONVENTION = {
@@ -8,7 +8,8 @@ POSTGRES_INDEXES_NAMING_CONVENTION = {
     "fk": "%(table_name)s_%(column_0_name)s_fkey",
     "pk": "%(table_name)s_pkey",
 }
+
 metadata = MetaData(naming_convention=POSTGRES_INDEXES_NAMING_CONVENTION)
 
-class Base(DeclarativeBase):
+class Base(SQLModel):
     metadata = metadata
