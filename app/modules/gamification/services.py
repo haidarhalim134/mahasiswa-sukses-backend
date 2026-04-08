@@ -15,7 +15,7 @@ from app.modules.gamification.schemas import (
     QuestEvent,
     QuestItem,
 )
-import uuid
+from uuid import UUID
 
 from app.users.models import User
 from app.users.schemas import PublicUserView
@@ -30,7 +30,7 @@ def get_achievement_def_by_event(event: QuestEvent):
 
 async def reset_quests_by_frequency(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
     frequency: QuestFrequency,
 ):
     _ = await db.execute(
@@ -97,7 +97,7 @@ async def progress_quest(
 
 async def get_user_quests(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
     frequency: QuestFrequency | None
 ) -> list[QuestItem]:
     """
@@ -177,7 +177,7 @@ async def progress_achievement(
 
 async def get_user_achievements(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: UUID,
     achievemnt_type: AchievementType | None=None
 ) -> list[AchievementItem]:  # you can reuse or create AchievementItem later
     """
@@ -295,7 +295,7 @@ async def generate_leaderboard(
 
     return leaderboard
 
-async def get_user_rank(db: AsyncSession, user_id: uuid.UUID) -> int:
+async def get_user_rank(db: AsyncSession, user_id: UUID) -> int:
     result = await db.execute(
         select(User.total_xp).where(User.id == user_id)
     )
