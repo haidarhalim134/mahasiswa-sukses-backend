@@ -38,7 +38,7 @@ class User(Base, table=True):
         )
     )
 
-    phone_number: Optional[str] = Field(
+    phone_number: str = Field(
         default=None,
         nullable=True
     )
@@ -49,7 +49,7 @@ class User(Base, table=True):
         unique=True
     )
 
-    full_name: Optional[str] = Field(
+    full_name: str = Field(
         default=None,
         nullable=True,
     )
