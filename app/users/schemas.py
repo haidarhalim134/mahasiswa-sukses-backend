@@ -1,6 +1,7 @@
 from datetime import date
 from typing import Optional
 from uuid import UUID
+
 from pydantic import BaseModel, EmailStr, Field
 
 class UserStats(BaseModel):
@@ -25,3 +26,7 @@ class ProfileUpdate(BaseModel):
 
 class SettingsUpdate(BaseModel):
     notifications: Optional[bool] = None
+
+class PublicUserView(BaseModel):
+    id: UUID
+    full_name: str
