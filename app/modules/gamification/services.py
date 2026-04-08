@@ -86,6 +86,9 @@ async def progress_quest(
             quest.progress = quest.target
             quest.is_completed = True
             await add_xp(db, user, qdef["xp_reward"])
+            
+            # hook
+            await progress_achievement(db, user, QuestEvent.COMPLETE_QUEST)
 
     await db.commit()
 
@@ -164,6 +167,8 @@ async def progress_achievement(
         if not achievement.is_completed and achievement.progress >= achievement.target:
             achievement.progress = achievement.target
             achievement.is_completed = True
+            achievement.completion_date = datetime.now(timezone.utc).date()
+
             await add_xp(db, user, adef["xp_reward"])
 
     await db.commit()
@@ -195,6 +200,7 @@ async def get_user_achievements(
 
         current_progress = progress.progress if progress else 0
         is_completed = progress.is_completed if progress else False
+        completion_date = progress.completion_date if progress else None
 
         progress_percentage = int((current_progress / adef["target"]) * 100)
 
@@ -207,6 +213,7 @@ async def get_user_achievements(
             **adef,
             progress_percentage=progress_percentage,
             is_completed=is_completed,
+            completion_date=completion_date
         )
 
         items.append(item)

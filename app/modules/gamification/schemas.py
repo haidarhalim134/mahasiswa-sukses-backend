@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import Optional, TypedDict
 from pydantic import BaseModel
@@ -40,6 +40,7 @@ class AchievementItem(BaseModel):
     difficulty: QuizDifficulty 
     progress_percentage: int
     is_completed: bool
+    completion_date: date | None
 
 class AchievementSummary(BaseModel):
     total_quest: int

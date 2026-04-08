@@ -3,7 +3,7 @@ from typing import Optional
 import uuid
 
 from app.db.base import Base
-from sqlmodel import Field, Column, Relationship
+from sqlmodel import DateTime, Field, Column, Relationship
 from sqlalchemy import String, Integer, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -51,6 +51,11 @@ class UserAchievement(Base, table=True):
     target: int = Field(default=1)
 
     is_completed: bool = Field(default=False)
+
+    completion_date: date = Field(
+        default=None,
+        nullable=True
+    )
 
     type: AchievementType = Field(
         sa_column=Column(String, nullable=False),
