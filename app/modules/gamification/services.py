@@ -13,6 +13,8 @@ from app.modules.gamification.schemas import (
 )
 import uuid
 
+from app.users.models import User
+
 
 
 def get_quest_def_by_event(event: QuestEvent):
@@ -41,7 +43,7 @@ async def reset_quests_by_frequency(
 
 async def progress_quest(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user: User,
     event: QuestEvent,
     amount: int = 1,
 ):
@@ -54,7 +56,7 @@ async def progress_quest(
     for qdef in quest_defs:
         result = await db.execute(
             select(UserQuest).where(
-                UserQuest.user_id == user_id,
+                UserQuest.user_id == user.id,
                 UserQuest.quest_id == qdef["id"],
             )
         )
@@ -62,7 +64,7 @@ async def progress_quest(
 
         if not quest:
             quest = UserQuest(
-                user_id=user_id,
+                user_id=user.id,
                 quest_id=qdef["id"],
                 progress=0,
                 target=qdef["target"],
@@ -78,6 +80,7 @@ async def progress_quest(
         if quest.progress >= quest.target:
             quest.progress = quest.target
             quest.is_completed = True
+            await add_xp(db, user, qdef["xp_reward"])
 
     await db.commit()
 
@@ -118,3 +121,12 @@ async def get_user_quests(
         items.append(item)
 
     return items
+
+async def add_xp(
+    db: AsyncSession,
+    user: User,
+    amount: int,
+):
+    user.total_xp += amount
+
+    await db.commit()
