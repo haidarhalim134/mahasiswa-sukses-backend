@@ -71,7 +71,7 @@ async def get_avatar(
     db: AsyncSession = Depends(get_db)
 ):
     """Endpoint untuk mengambil avatar user tertentu"""
-        # TODO: replace with your actual DB fetch
+
     user = await get_user_by_id(db, user_id)  # implement this
 
     if not user:
@@ -80,8 +80,6 @@ async def get_avatar(
     if not user.full_name:
         raise HTTPException(status_code=400, detail="User full name not available")
 
-    # Build ui-avatars URL
-    # Example: https://ui-avatars.com/api/?name=John+Doe&format=png
     name_query = user.full_name.replace(" ", "+")
     url = f"https://ui-avatars.com/api/?name={name_query}&format=png"
 

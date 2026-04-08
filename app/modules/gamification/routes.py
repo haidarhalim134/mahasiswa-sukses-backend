@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.permissions import get_current_user
 from app.db.session import get_db
-from app.modules.gamification.services import get_user_achievements, get_user_quests
+from app.modules.gamification.services import generate_leaderboard, get_user_achievements, get_user_quests, get_user_rank
 from app.users.models import User
 
 from app.modules.gamification.schemas import (
@@ -66,8 +66,15 @@ async def get_gamification_summary(
 @router.get("/leaderboard", response_model=LeaderboardPage)
 async def get_leaderboard(
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Endpoint untuk mengambil seluruh data page leaderboard mencakup ranking global dan ranking mahasiswa terlogin
     """
-    raise NotImplementedError
+    return LeaderboardPage(
+        user_rank=await get_user_rank(db, current_user.id),
+        user_total_xp=current_user.total_xp,
+        top_global=await generate_leaderboard(db, 100),
+        # TODO: no friends feature yet, update later
+        top_friends=await generate_leaderboard(db, 100) 
+    )

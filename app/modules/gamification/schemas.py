@@ -4,6 +4,7 @@ from typing import Optional, TypedDict
 from pydantic import BaseModel
 
 from app.modules.quiz.schemas import QuizDifficulty
+from app.users.schemas import PublicUserView
 
 class QuestFrequency(str, Enum):
     DAILY = "harian"
@@ -48,9 +49,9 @@ class AchievementSummary(BaseModel):
     total_xp_earned: int
 
 class LeaderboardItem(BaseModel):
-    name: str
-    avatar_url: str
+    user: PublicUserView
     xp: int
+    rank: int
 
 class LeaderboardPage(BaseModel):
     user_rank: int

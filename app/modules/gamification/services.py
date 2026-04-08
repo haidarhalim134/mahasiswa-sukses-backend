@@ -3,13 +3,14 @@ from typing import Optional
 from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select, update
+from sqlmodel import desc, func, select, update
 
 from app.modules.gamification.gamification import ACHIEVEMENTS, QUESTS
 from app.modules.gamification.models import UserAchievement, UserQuest
 from app.modules.gamification.schemas import (
     AchievementItem,
     AchievementType,
+    LeaderboardItem,
     QuestFrequency,
     QuestEvent,
     QuestItem,
@@ -17,6 +18,7 @@ from app.modules.gamification.schemas import (
 import uuid
 
 from app.users.models import User
+from app.users.schemas import PublicUserView
 
 
 
@@ -268,3 +270,48 @@ async def update_login_streak(user: User):
     user.last_login_at = datetime.now(timezone.utc)
 
     return True 
+
+async def generate_leaderboard(
+    db: AsyncSession,
+    limit: int = 10
+) -> list[LeaderboardItem]:
+    result = await db.execute(
+        select(User)
+        .order_by(desc(User.total_xp))
+        .limit(limit)
+    )
+    users = result.scalars().all()
+
+    leaderboard: list[LeaderboardItem] = []
+    for idx, user in enumerate(users, start=1):
+        leaderboard.append(LeaderboardItem(
+            rank=idx,
+            user=PublicUserView(
+                id=user.id,
+                full_name=user.full_name
+            ),
+            xp=user.total_xp
+        ))
+
+    return leaderboard
+
+async def get_user_rank(db: AsyncSession, user_id: uuid.UUID) -> int:
+    result = await db.execute(
+        select(User.total_xp).where(User.id == user_id)
+    )
+    user_xp = result.scalar_one_or_none()
+
+    if user_xp is None:
+        raise ValueError("User not found")
+
+    result = await db.execute(
+        select(func.count())
+        .select_from(User)
+        .where(
+            User.total_xp > user_xp
+        )
+    )
+
+    higher_count = result.scalar_one()
+
+    return higher_count + 1
