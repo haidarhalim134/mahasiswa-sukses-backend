@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Body, Depends
 
-from app.modules.community.schemas import CommunityStats, ForumAuthor, ForumFeedRequest, ForumPostCreate, ForumPostRead, ForumTab, PostComment
+from app.modules.community.schemas import CommunityStats, ForumFeedRequest, ForumPostCreate, ForumPostRead, ForumTab, PostComment
 from app.auth.permissions import get_current_user
 from app.users.models import User
 
