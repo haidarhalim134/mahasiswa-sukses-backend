@@ -7,19 +7,19 @@ from datetime import datetime
 # --- Enums ---
 
 class TaskCategory(str, Enum):
-    AKADEMIK = "Akademik"
-    PRIBADI = "Pribadi"
-    ORGANISASI = "Organisasi"
+    AKADEMIK = "akademik"
+    PRIBADI = "pribadi"
+    ORGANISASI = "organisasi"
 
 class TaskPriority(str, Enum):
-    TINGGI = "Tinggi"
-    SEDANG = "Sedang"
-    RENDAH = "Rendah"
+    TINGGI = "tinggi"
+    SEDANG = "sedang"
+    RENDAH = "rendah"
 
 class TaskProgress(str, Enum):
-    TODO = "Todo"
-    ON_PROGRESS = "Proses"
-    DONE = "Selesai"
+    TODO = "todo"
+    ON_PROGRESS = "proses"
+    DONE = "selesai"
 
 # --- Schemas ---
 
