@@ -4,7 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.permissions import get_current_user
 from app.db.session import get_db
-from app.modules.progress_tracking.services import create_task_service, delete_task_service, get_task_summary_service, get_tasks_service, update_task_progress_service
+from app.modules.gamification.schemas import QuestEvent
+from app.modules.gamification.services import progress_achievement, progress_quest
+from app.modules.progress_tracking.services import create_task_service, delete_task_service, get_task_by_id, get_task_summary_service, get_tasks_service, update_task_progress_service
 from app.users.models import User
 from app.modules.progress_tracking.schemas import TaskCategory, TaskCreate, TaskProgress, TaskRead, TaskSummary
 
@@ -48,7 +50,14 @@ async def update_task_progress(
     db: AsyncSession = Depends(get_db)
 ):
     """Endpoint untuk memperbarui progress task"""
-    return await update_task_progress_service(db, task_id, progress)
+
+    _ = await update_task_progress_service(db, task_id, progress)
+    
+    # TODO: naive, must handle idempotency, also making sure reward wont be given twice for one task (e.g. todo -> complete -> todo -> complete)
+    if progress == TaskProgress.DONE:
+        # hook
+        _ = await progress_quest(db, current_user, QuestEvent.COMPLETE_TASK)
+        _ = await progress_achievement(db, current_user, QuestEvent.COMPLETE_TASK)
 
 
 @router.delete("/tasks/{task_id}")
