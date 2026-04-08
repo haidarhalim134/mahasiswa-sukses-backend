@@ -26,6 +26,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app.db.base import Base
 import app.users.models
+import app.modules.gamification.models
 
 target_metadata = Base.metadata
 

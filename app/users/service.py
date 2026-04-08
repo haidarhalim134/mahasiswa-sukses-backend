@@ -1,7 +1,7 @@
 from uuid import UUID
 from datetime import date
 
-from sqlalchemy import select
+from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.users.models import User
