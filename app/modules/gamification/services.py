@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
+from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, update
@@ -220,3 +221,43 @@ async def add_xp(
     user.total_xp += amount
 
     await db.commit()
+
+async def handle_daily_streak(db: AsyncSession, user: User):
+    now = datetime.now(timezone.utc).date()
+
+    if user.last_login_at and user.last_login_at.date() == now:
+        return
+
+    updated = await update_login_streak(user)
+
+    if updated:
+        await progress_quest(db, user, QuestEvent.USER_LOGIN)
+        await progress_achievement(db, user, QuestEvent.USER_LOGIN)
+
+        db.add(user)
+        await db.commit()
+
+async def update_login_streak(user: User):
+    now = datetime.now(timezone.utc).date()
+
+    if user.last_login_at:
+        last_login_date = user.last_login_at.date()
+        diff = (now - last_login_date).days
+
+        if diff == 0:
+            return False
+
+        elif diff == 1:
+            user.current_streak += 1
+
+        else:
+            user.current_streak = 1
+    else:
+        user.current_streak = 1
+
+    if user.current_streak > user.longest_streak:
+        user.longest_streak = user.current_streak
+
+    user.last_login_at = datetime.now(timezone.utc)
+
+    return True 

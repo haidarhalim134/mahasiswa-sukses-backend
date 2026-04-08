@@ -9,6 +9,7 @@ from app.auth.schemas import Visibility
 from app.core.supabase import supabase
 from app.db.session import get_db
 from app.core.config import settings
+from app.modules.gamification.services import handle_daily_streak
 from app.users.service import get_user_by_id
 from app.users.models import Role, User
 
@@ -47,6 +48,10 @@ async def get_current_user(
     current_user = await get_user_by_id(db, UUID(user_id))
     if not current_user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+
+    # HOOK
+    await handle_daily_streak(db, current_user)
+
     return current_user
 
 

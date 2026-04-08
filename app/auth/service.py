@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.schemas import LoginRequest, LoginResponse, RegisterRequest, TokenRefreshResponse
 from app.core.supabase import supabase
+from app.modules.gamification.services import handle_daily_streak
 from app.users.service import create_user_profile, get_user_by_id
 
 
@@ -49,6 +50,9 @@ async def login_user(db: AsyncSession, data: LoginRequest):
     user_data = await get_user_by_id(db, UUID(res.session.user.id))
 
     assert user_data != None
+
+    # HOOK
+    await handle_daily_streak(db, user_data)
 
     return LoginResponse(
         access_token=res.session.access_token,

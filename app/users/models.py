@@ -1,12 +1,12 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 from enum import Enum
 
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Integer, DateTime
+from sqlmodel import Field
 
 from app.db.base import Base
-from sqlmodel import Field
 
 
 class Role(str, Enum):
@@ -31,7 +31,11 @@ class User(Base, table=True):
 
     role: Role = Field(
         default=Role.student,
-        sa_column=Column(String, nullable=False)
+        sa_column=Column(
+            String,
+            nullable=False,
+            server_default="student"
+        )
     )
 
     phone_number: Optional[str] = Field(
@@ -56,5 +60,36 @@ class User(Base, table=True):
     )
 
     total_xp: int = Field(
-        default=0
+        default=0, 
+        sa_column=Column(
+            Integer,
+            nullable=False,
+            server_default="0"
+        )
+    )
+
+    last_login_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=True
+        )
+    )
+
+    current_streak: int = Field(
+        default=0,
+        sa_column=Column(
+            Integer,
+            nullable=False,
+            server_default="0"
+        )
+    )
+
+    longest_streak: int = Field(
+        default=0,
+        sa_column=Column(
+            Integer,
+            nullable=False,
+            server_default="0"
+        )
     )
