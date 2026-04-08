@@ -1,8 +1,9 @@
 from uuid import UUID
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from app.auth.schemas import LoginRequest, LoginResponse, RegisterRequest
+from app.auth.schemas import LoginRequest, LoginResponse, RegisterRequest, TokenRefreshResponse
 from app.core.supabase import supabase
 from app.users.service import create_user_profile, get_user_by_id
 
@@ -67,3 +68,17 @@ async def reset_password(email: str):
     )
 
     return
+
+def refresh_access_token(refresh_token):
+    session = supabase.auth.refresh_session(refresh_token)
+
+    if not session or not session.session:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
+
+    return TokenRefreshResponse(
+        access_token=session.session.access_token,
+        refresh_token=session.session.refresh_token,
+    )

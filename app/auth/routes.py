@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, Response, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.schemas import RegisterRequest, LoginRequest, ResetPasswordRequest, LoginResponse, UpdatePasswordRequest
-from app.auth.service import register_user, login_user, reset_password
+from app.auth.schemas import RegisterRequest, LoginRequest, ResetPasswordRequest, LoginResponse, TokenRefreshRequest, TokenRefreshResponse, UpdatePasswordRequest
+from app.auth.service import refresh_access_token, register_user, login_user, reset_password
 from app.db.session import get_db
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -77,3 +77,8 @@ async def update_password(data: UpdatePasswordRequest):
     })
 
     return Response(status_code=200)
+
+@router.post("/refresh-token", response_model=TokenRefreshResponse)
+def refresh_token(data: TokenRefreshRequest):
+    """Endpoint untuk mengambil access token baru"""
+    return refresh_access_token(data.refresh_token)

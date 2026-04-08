@@ -33,3 +33,10 @@ class LoginResponse(BaseModel):
 class Visibility(str, Enum):
     public = "public"
     private = "private"
+
+class TokenRefreshRequest(BaseModel):
+    refresh_token: str
+
+class TokenRefreshResponse(BaseModel):
+    access_token: str
+    refresh_token: str
