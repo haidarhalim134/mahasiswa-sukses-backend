@@ -25,7 +25,11 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    base_url = os.getenv("BASE_URL") or os.getenv("VERCEL_PROJECT_PRODUCTION_URL")
+    base_url = os.getenv("BASE_URL")
+    if not base_url:
+        base_url = os.getenv("VERCEL_PROJECT_PRODUCTION_URL")
+        if base_url: 
+            base_url = "https://" + base_url
     
     # silent skip for now
     if base_url:
