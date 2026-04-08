@@ -11,9 +11,6 @@ from app.modules.gamification.schemas import QuestFrequency, AchievementType
 
 
 class UserQuest(Base, table=True):
-    """
-    Stores per-user quest progress
-    """
 
     id: Optional[int] = Field(default=None, primary_key=True)
 
@@ -34,9 +31,6 @@ class UserQuest(Base, table=True):
     )
 
 class UserAchievement(Base, table=True):
-    """
-    Stores per-user achievement progress
-    """
 
     id: Optional[int] = Field(default=None, primary_key=True)
 
