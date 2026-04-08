@@ -54,3 +54,7 @@ class User(Base, table=True):
         default=None,
         nullable=True,
     )
+
+    total_xp: int = Field(
+        default=0
+    )
