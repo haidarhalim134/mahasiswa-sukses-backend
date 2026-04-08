@@ -6,13 +6,13 @@ from typing import List, Optional
 # --- New Enums for Quiz Module ---
 
 class QuizDifficulty(str, Enum):
-    EASY = "Easy"
-    MEDIUM = "Medium"
-    HARD = "Hard"
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"
 
 class QuizStatus(str, Enum):
-    BELUM_DIMULAI = "Belum Dimulai"
-    SELESAI = "Selesai"
+    BELUM_DIMULAI = "belum dimulai"
+    SELESAI = "selesai"
 
 # --- New Schemas ---
 

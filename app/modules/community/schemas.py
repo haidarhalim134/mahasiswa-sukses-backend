@@ -8,8 +8,8 @@ from app.users.schemas import PublicUserView
 
 
 class ForumTab(str, Enum):
-    POSTINGAN = "Postingan"
-    RUANG_BELAJAR = "Ruang Belajar"
+    POSTINGAN = "postingan"
+    RUANG_BELAJAR = "ruang belajar"
 
 
 class ForumPostBase(BaseModel):
