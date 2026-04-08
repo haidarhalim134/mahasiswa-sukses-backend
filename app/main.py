@@ -34,8 +34,8 @@ async def lifespan(app: FastAPI):
     # silent skip for now
     if base_url:
         scheduler = get_scheduler()
-        scheduler.schedule_daily(f"{base_url}/api/task/daily", settings.task_token)
-        scheduler.schedule_weekly(f"{base_url}/api/task/weekly", settings.task_token)
+        scheduler.schedule_daily(f"{base_url}/api/v1/task/daily", settings.task_token)
+        scheduler.schedule_weekly(f"{base_url}/api/v1/task/weekly", settings.task_token)
     yield
 
 
