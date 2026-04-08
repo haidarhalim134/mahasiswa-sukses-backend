@@ -1,14 +1,17 @@
+from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 import app.auth.routes as auth
+from app.core.scheduler import get_scheduler
 import app.users.routes as user
 import app.modules.community.routes as community
 import app.modules.gamification.routes as gamification
 import app.modules.progress_tracking.routes as progress_tracking
 import app.modules.quiz.routes as quiz
 import app.modules.certificate.routes as certificate
+import app.modules.task.routes as task
 
 from app.auth.permissions import get_current_user, require_user
 from app.core.config import settings
@@ -19,7 +22,20 @@ import os
 
 load_dotenv()
 
-app = FastAPI(title="Mahasiswa Sukses Backend")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    base_url = os.getenv("BASE_URL") or os.getenv("VERCEL_PROJECT_PRODUCTION_URL")
+    
+    # silent skip for now
+    if base_url:
+        scheduler = get_scheduler()
+        scheduler.schedule_daily(f"{base_url}/api/task/daily", settings.task_token)
+        scheduler.schedule_weekly(f"{base_url}/api/task/weekly", settings.task_token)
+    yield
+
+
+app = FastAPI(title="Mahasiswa Sukses Backend", lifespan=lifespan)
 
 origins = ["*"]
 
@@ -42,6 +58,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
     return JSONResponse(status_code=500, content=response)
 
+
 app.include_router(auth.router)
 app.include_router(user.router)
 app.include_router(community.router)
@@ -49,6 +66,7 @@ app.include_router(gamification.router)
 app.include_router(progress_tracking.router)
 app.include_router(quiz.router)
 app.include_router(certificate.router)
+app.include_router(task.router)
 
 @app.get("/")
 async def health():

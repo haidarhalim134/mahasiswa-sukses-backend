@@ -30,13 +30,12 @@ def get_achievement_def_by_event(event: QuestEvent):
 
 async def reset_quests_by_frequency(
     db: AsyncSession,
-    user_id: UUID,
     frequency: QuestFrequency,
 ):
+    # TODO: missing potential scheduler error which can reset quest more times than necessary
     _ = await db.execute(
         update(UserQuest)
         .where(
-            UserQuest.user_id == user_id,  # pyright: ignore[reportArgumentType]
             UserQuest.frequency == frequency, # pyright: ignore[reportArgumentType]
         )
         .values(
