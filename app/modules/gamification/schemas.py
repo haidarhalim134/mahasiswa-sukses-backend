@@ -10,13 +10,14 @@ class QuestFrequency(str, Enum):
     WEEKLY = "mingguan"
 
 class AchievementType(str, Enum):
-    QUEST = "Quest"
-    FORUM = "Forum"
-    STREAK = "Streak"
+    QUEST = "quest"
+    FORUM = "forum"
+    STREAK = "streak"
 
 class QuestEvent(str, Enum):
     USER_LOGIN = "user_login"
     COMPLETE_TASK = "complete_task"
+    COMPLETE_QUEST = "complete_quest"
     RECEIVE_LIKE = "receive_like"
     STAYED_10_MINS = "stayed_10_mins"
 
@@ -64,4 +65,14 @@ class QuestDef(TypedDict):
     target: int
     difficulty: QuizDifficulty
     frequency: QuestFrequency
+    xp_reward: int
+
+class AchievementDef(TypedDict):
+    id: str
+    title: str
+    description: str
+    event: QuestEvent
+    type: AchievementType
+    target: int
+    difficulty: QuizDifficulty
     xp_reward: int

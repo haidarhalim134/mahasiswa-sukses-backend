@@ -4,9 +4,11 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, update
 
-from app.modules.gamification.quest import QUESTS
-from app.modules.gamification.models import UserQuest
+from app.modules.gamification.gamification import ACHIEVEMENTS, QUESTS
+from app.modules.gamification.models import UserAchievement, UserQuest
 from app.modules.gamification.schemas import (
+    AchievementItem,
+    AchievementType,
     QuestFrequency,
     QuestEvent,
     QuestItem,
@@ -20,6 +22,8 @@ from app.users.models import User
 def get_quest_def_by_event(event: QuestEvent):
     return [q for q in QUESTS if q["event"] == event]
 
+def get_achievement_def_by_event(event: QuestEvent):
+    return [q for q in ACHIEVEMENTS if q["event"] == event]
 
 async def reset_quests_by_frequency(
     db: AsyncSession,
@@ -40,7 +44,7 @@ async def reset_quests_by_frequency(
 
     await db.commit()
 
-
+## quest
 async def progress_quest(
     db: AsyncSession,
     user: User,
@@ -77,7 +81,7 @@ async def progress_quest(
 
         quest.progress += amount
 
-        if quest.progress >= quest.target:
+        if not quest.is_completed and quest.progress >= quest.target:
             quest.progress = quest.target
             quest.is_completed = True
             await add_xp(db, user, qdef["xp_reward"])
@@ -88,16 +92,17 @@ async def progress_quest(
 async def get_user_quests(
     db: AsyncSession,
     user_id: uuid.UUID,
-    frequency: QuestFrequency
+    frequency: QuestFrequency | None
 ) -> list[QuestItem]:
     """
     Return all quests with progress (merge DB + QuestDef)
     """
+    stmt = select(UserQuest).where(UserQuest.user_id == user_id)
+    if frequency:
+        stmt = stmt.where(UserQuest.frequency == frequency)
 
     # get user progress
-    result = await db.execute(
-        select(UserQuest).where(UserQuest.user_id == user_id, UserQuest.frequency == frequency)
-    )
+    result = await db.execute(stmt)
     user_quests = result.scalars().all()
 
     quest_map = {q.quest_id: q for q in user_quests}
@@ -105,7 +110,7 @@ async def get_user_quests(
     items = []
 
     for qdef in QUESTS:
-        if qdef['frequency'] != frequency:
+        if frequency and qdef['frequency'] != frequency:
             continue
 
         progress = quest_map.get(qdef["id"])
@@ -117,6 +122,91 @@ async def get_user_quests(
         progress_percentage = int((current_progress / qdef["target"]) * 100)
 
         item = QuestItem(**qdef, is_completed=is_completed, progress_percentage=progress_percentage)
+
+        items.append(item)
+
+    return items
+
+## achievement
+async def progress_achievement(
+    db: AsyncSession,
+    user: User,
+    event: QuestEvent,
+    amount: int = 1,
+):
+    achievement_defs = get_achievement_def_by_event(event)
+
+    for adef in achievement_defs:
+        result = await db.execute(
+            select(UserAchievement).where(
+                UserAchievement.user_id == user.id,
+                UserAchievement.achievement_id == adef["id"],
+            )
+        )
+        achievement = result.scalar_one_or_none()
+
+        if not achievement:
+            achievement = UserAchievement(
+                user_id=user.id,
+                achievement_id=adef["id"],
+                progress=0,
+                type=adef['type'],
+                target=adef["target"],
+            )
+            db.add(achievement)
+
+        if achievement.is_completed:
+            continue
+
+        achievement.progress += amount
+
+        if not achievement.is_completed and achievement.progress >= achievement.target:
+            achievement.progress = achievement.target
+            achievement.is_completed = True
+            await add_xp(db, user, adef["xp_reward"])
+
+    await db.commit()
+
+async def get_user_achievements(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    achievemnt_type: AchievementType | None=None
+) -> list[AchievementItem]:  # you can reuse or create AchievementItem later
+    """
+    Return all achievements with progress
+    """
+    stmt = select(UserAchievement).where(UserAchievement.user_id == user_id)
+    if achievemnt_type:
+        stmt = stmt.where(UserAchievement.type == achievemnt_type)
+
+    result = await db.execute(stmt)
+    user_achievements = result.scalars().all()
+
+    achievement_map = {a.achievement_id: a for a in user_achievements}
+
+    items = []
+
+    for adef in ACHIEVEMENTS:
+        if achievemnt_type and adef['type'] != achievemnt_type:
+            continue
+        
+        progress = achievement_map.get(adef["id"])
+
+        current_progress = progress.progress if progress else 0
+        is_completed = progress.is_completed if progress else False
+
+        progress_percentage = int((current_progress / adef["target"]) * 100)
+
+        item = AchievementItem(
+            # title=adef["title"],
+            # description=adef["description"],
+            # xp_reward=adef["xp_reward"],
+            # difficulty=adef["difficulty"], 
+            # type=adef['type'],
+            **adef,
+            progress_percentage=progress_percentage,
+            is_completed=is_completed,
+        )
 
         items.append(item)
 

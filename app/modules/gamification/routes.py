@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.permissions import get_current_user
 from app.db.session import get_db
-from app.modules.gamification.services import get_user_quests
+from app.modules.gamification.services import get_user_achievements, get_user_quests
 from app.users.models import User
 
 from app.modules.gamification.schemas import (
@@ -18,19 +18,19 @@ from app.modules.gamification.schemas import (
 router = APIRouter(prefix="/api/v1/gamification", tags=["gamification"])
 
 
-@router.get("/achievement/{achievement_type}", response_model=list[AchievementItem])
+@router.get("/achievement", response_model=list[AchievementItem])
 async def get_achievements(
-    achievement_type: AchievementType,
+    achievement_type: AchievementType | None = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Endpoint untuk mengambil achievement mahasiswa berdasarkan tipe"""
-    raise NotImplementedError
+    return await get_user_achievements(db, current_user.id, achievement_type)
 
 
-@router.get("/quests/{frequency}", response_model=list[QuestItem])
+@router.get("/quests", response_model=list[QuestItem])
 async def get_quests(
-    frequency: QuestFrequency,
+    frequency: QuestFrequency | None = None,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -43,11 +43,24 @@ async def get_quests(
 @router.get("/summary", response_model=AchievementSummary)
 async def get_gamification_summary(
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Endpoint untuk mengambil rangkuman pencapaian mahasiswa.
     """
-    raise NotImplementedError
+
+    # TODO: optimize maybe
+    daily_quest = await get_user_quests(db, current_user.id, QuestFrequency.DAILY)
+    weekly_quest = await get_user_quests(db, current_user.id, QuestFrequency.WEEKLY)
+    all_quest = daily_quest + weekly_quest
+    total_quest = len(all_quest)
+    total_quest_completed = len([x for x in all_quest if x.is_completed])
+
+    return AchievementSummary(
+        total_quest=total_quest,
+        total_quest_completed=total_quest_completed,
+        total_xp_earned=current_user.total_xp
+    )
 
 
 @router.get("/leaderboard", response_model=LeaderboardPage)

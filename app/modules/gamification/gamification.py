@@ -1,4 +1,4 @@
-from app.modules.gamification.schemas import QuestDef, QuestEvent, QuestFrequency, AchievementType
+from app.modules.gamification.schemas import AchievementDef, QuestDef, QuestEvent, QuestFrequency, AchievementType
 from app.modules.quiz.schemas import QuizDifficulty
 
 
@@ -19,7 +19,7 @@ QUESTS: list[QuestDef] = [
         "title": "Fokus belajar selama 1 jam",
         "description": "Total belajar 1 jam hari ini",
         "event": QuestEvent.STAYED_10_MINS,
-        "target": 1,
+        "target": 60,
         "difficulty": QuizDifficulty.MEDIUM,
         "frequency": QuestFrequency.DAILY,
         "xp_reward": 50,
@@ -41,7 +41,7 @@ QUESTS: list[QuestDef] = [
         "title": "Produktif Mingguan",
         "description": "Total 10 jam belajar minggu ini",
         "event": QuestEvent.COMPLETE_TASK,
-        "target": 10,
+        "target": 600,
         "difficulty": QuizDifficulty.HARD,
         "frequency": QuestFrequency.WEEKLY,
         "xp_reward": 150,
@@ -56,4 +56,17 @@ QUESTS: list[QuestDef] = [
         "frequency": QuestFrequency.WEEKLY,
         "xp_reward": 50,
     },
+]
+
+ACHIEVEMENTS: list[AchievementDef] = [
+    {
+        "id": "completed_first_quest",
+        "title": "First Step",
+        "description": "Selesaikan quest pertama",
+        "event": QuestEvent.COMPLETE_QUEST,
+        "type": AchievementType.QUEST,
+        "target": 1,
+        "difficulty": QuizDifficulty.EASY,
+        "xp_reward": 100,
+    }
 ]
