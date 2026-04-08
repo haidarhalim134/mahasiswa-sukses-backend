@@ -9,6 +9,7 @@ from app.users.models import User
 from app.modules.gamification.schemas import (
     AchievementItem,
     AchievementSummary,
+    AchievementType,
     LeaderboardPage,
     QuestFrequency,
     QuestItem,
@@ -19,6 +20,7 @@ router = APIRouter(prefix="/api/v1/gamification", tags=["gamification"])
 
 @router.get("/achievement/{achievement_type}", response_model=list[AchievementItem])
 async def get_achievements(
+    achievement_type: AchievementType,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
