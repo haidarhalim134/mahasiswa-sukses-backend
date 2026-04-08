@@ -19,7 +19,7 @@ class QuestEvent(str, Enum):
     COMPLETE_TASK = "complete_task"
     COMPLETE_QUEST = "complete_quest"
     RECEIVE_LIKE = "receive_like"
-    STAYED_1_HOUR = "stayed_1_hour"
+    STAY_1_HOUR = "stay_1_hour"
 
 class QuestItem(BaseModel):
     # id: int
