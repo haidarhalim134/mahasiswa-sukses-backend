@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlmodel import select, delete, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.gamification.services import progress_quest
 from app.modules.progress_tracking.models import Task
 from app.modules.progress_tracking.schemas import TaskCreate, TaskProgress, TaskCategory, TaskPriority
 
@@ -37,6 +38,13 @@ async def create_task_service(
     await db.refresh(new_task)
     return new_task
 
+
+async def get_task_by_id(
+    db: AsyncSession,
+    task_id: int
+):
+    result = await db.execute(select(Task).where(Task.id == task_id))
+    return result.scalar_one_or_none()
 
 async def get_tasks_service(
     db: AsyncSession,
