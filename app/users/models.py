@@ -5,7 +5,8 @@ from enum import Enum
 
 from sqlalchemy import Column, String
 
-from sqlmodel import SQLModel, Field
+from app.db.base import Base
+from sqlmodel import Field
 
 
 class Role(str, Enum):
@@ -13,7 +14,7 @@ class Role(str, Enum):
     admin = "admin"
 
 
-class User(SQLModel, table=True):
+class User(Base, table=True):
     __tablename__ = "users"
 
     id: uuid.UUID = Field(

@@ -31,13 +31,7 @@ async def login(
     Page: Sign-in.
     Endpoint untuk melakukan autentikasi pengguna.
     """
-    try:
-        return await login_user(db, data)
-    except:
-        raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials."
-            )
+    return await login_user(db, data)
 
 
 @router.post("/reset-password")
