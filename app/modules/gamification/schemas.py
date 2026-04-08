@@ -21,7 +21,7 @@ class QuestEvent(str, Enum):
     STAYED_10_MINS = "stayed_10_mins"
 
 class QuestItem(BaseModel):
-    id: int
+    # id: int
     title: str
     description: str
     frequency: QuestFrequency
@@ -31,7 +31,7 @@ class QuestItem(BaseModel):
     is_completed: bool
 
 class AchievementItem(BaseModel):
-    id: int
+    # id: int
     title: str
     description: str
     type: AchievementType
