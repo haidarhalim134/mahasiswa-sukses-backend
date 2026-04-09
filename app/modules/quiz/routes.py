@@ -18,7 +18,7 @@ async def get_all_quizzes(
     raise NotImplementedError
 
 
-@router.get("/quizzes/{quiz_id}/start", response_model=QuestionRead)
+@router.post("/quizzes/{quiz_id}/start", response_model=QuestionRead)
 async def start_quiz(
     quiz_id: int,
     current_user: User = Depends(get_current_user),

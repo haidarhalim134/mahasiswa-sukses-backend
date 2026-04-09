@@ -21,9 +21,11 @@ class QuizOverview(BaseModel):
     title: str
     category: str
     duration_minutes: int
+    minimum_score: int
     xp_reward: int
     difficulty: QuizDifficulty
     status: QuizStatus
+    completion_count: int
 
 class QuestionOption(BaseModel):
     id: int
@@ -41,7 +43,10 @@ class QuizSubmission(BaseModel):
     answers: dict[int, int]  # Question ID mapping to Option ID
 
 class QuizResult(BaseModel):
-    score_text: str  # e.g., "5 dari 5 soal benar"
+    correct_answers: int
+    total_questions: int
+    minimum_score: int
+    passed: bool
     points_gained: int
     streak_bonus: int
     certificate_id: Optional[str] = None
