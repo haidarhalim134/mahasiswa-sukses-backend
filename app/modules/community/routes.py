@@ -126,7 +126,7 @@ async def send_chat_message(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Endpoint kirim pesan stury room.
+    Endpoint untuk mengirim pesan ke study room.
     """
     raise NotImplementedError
 
