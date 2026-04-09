@@ -80,3 +80,10 @@ class AchievementDef(TypedDict):
     target: int
     difficulty: QuizDifficulty
     xp_reward: int
+
+class HistoryItem(BaseModel):
+    id: int
+    title: str
+    xp_reward: int
+    type: str
+    completed_at: datetime

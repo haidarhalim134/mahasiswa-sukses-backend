@@ -1,15 +1,17 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from sqlalchemy.engine.result import Result
+from typing import Any, Optional
 from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import desc, func, select, update
 
 from app.modules.gamification.gamification import ACHIEVEMENTS, QUESTS
-from app.modules.gamification.models import UserAchievement, UserQuest
+from app.modules.gamification.models import AchievementHistory, QuestHistory, UserAchievement, UserQuest
 from app.modules.gamification.schemas import (
     AchievementItem,
     AchievementType,
+    HistoryItem,
     LeaderboardItem,
     QuestFrequency,
     QuestEvent,
@@ -88,6 +90,16 @@ async def progress_quest(
             quest.is_completed = True
             await add_xp(db, user, qdef["xp_reward"])
             
+            history = QuestHistory(
+                user_id=user.id,
+                quest_id=qdef["id"],
+                title=qdef["title"],
+                xp_reward=qdef["xp_reward"],
+                completed_at=datetime.now(timezone.utc)
+            )
+
+            db.add(history)
+
             # hook
             await progress_achievement(db, user, QuestEvent.COMPLETE_QUEST)
 
@@ -171,6 +183,16 @@ async def progress_achievement(
             achievement.completion_date = datetime.now(timezone.utc).date()
 
             await add_xp(db, user, adef["xp_reward"])
+
+            history = AchievementHistory(
+                user_id=user.id,
+                achievement_id=adef["id"],
+                title=adef["title"],
+                xp_reward=adef["xp_reward"],
+                completed_at=datetime.now(timezone.utc)
+            )
+
+            db.add(history)
 
     await db.commit()
 
@@ -314,3 +336,60 @@ async def get_user_rank(db: AsyncSession, user_id: UUID) -> int:
     higher_count = result.scalar_one()
 
     return higher_count + 1
+
+async def get_user_history(
+    db: AsyncSession,
+    user_id: UUID
+) -> list[HistoryItem]:
+
+    # Fetch latest 50 quest history
+    quest_result = await db.execute(
+        select(
+            QuestHistory.id,
+            QuestHistory.title,
+            QuestHistory.xp_reward,
+            QuestHistory.completed_at,
+        )
+        .where(QuestHistory.user_id == user_id)
+        .order_by(QuestHistory.completed_at.desc())
+        .limit(50)
+    )
+
+    # Fetch latest 50 achievement history
+    achievement_result = await db.execute(
+        select(
+            AchievementHistory.id,
+            AchievementHistory.title,
+            AchievementHistory.xp_reward,
+            AchievementHistory.completed_at,
+        )
+        .where(AchievementHistory.user_id == user_id)
+        .order_by(AchievementHistory.completed_at.desc())
+        .limit(50)
+    )
+
+    history = []
+
+    for q in quest_result.all():
+        history.append(HistoryItem(
+            id=q.id,
+            title=q.title,
+            xp_reward=q.xp_reward,
+            type="quest",
+            completed_at=q.completed_at
+        ))
+
+    for a in achievement_result.all():
+        history.append(HistoryItem(
+            id=a.id,
+            title=a.title,
+            xp_reward=a.xp_reward,
+            type="achievement",
+            completed_at=a.completed_at
+        ))
+
+    # Final sort (merge both sources)
+    history.sort(key=lambda x: x.completed_at, reverse=True)
+
+    # Hard limit to 50 total items
+    return history[:50]

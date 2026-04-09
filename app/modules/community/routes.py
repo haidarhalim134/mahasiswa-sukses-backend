@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Body, Depends
-
-from app.modules.community.schemas import CommunityStats, ForumFeedRequest, ForumPostCreate, ForumPostRead, ForumTab, PostComment
+from fastapi import APIRouter, Depends, Query, status
 from app.auth.permissions import get_current_user
 from app.users.models import User
-
+from .schemas import (
+    CommunityStats, ForumFeedParams, ForumPostCreate, 
+    ForumPostRead, CommentRead, CommentCreate, LikeToggleResponse
+)
 
 router = APIRouter(prefix="/api/v1/community", tags=["community"])
 
@@ -16,14 +17,12 @@ async def get_community_stats(
     raise NotImplementedError
 
 
-@router.post("/feed", response_model=list[ForumPostRead])
+@router.get("/feed", response_model=list[ForumPostRead])
 async def get_forum_feed(
-    filter: ForumFeedRequest,
+    params: ForumFeedParams = Depends(),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Endpoint untuk mengambil list postingan
-    """
+    """Endpoint untuk mengambil list postingan"""
     raise NotImplementedError
 
 
@@ -37,20 +36,29 @@ async def create_post(
     raise NotImplementedError
 
 
-@router.post("/posts/{post_id}/comment")
-async def comment_post(
+@router.get("/posts/{post_id}", response_model=ForumPostRead)
+async def get_post_detail(
+    post_id: int, 
+    current_user: User = Depends(get_current_user)
+):
+    """Endpoint untuk mengambil detail lengkap satu postingan"""
+    raise NotImplementedError
+
+
+@router.post("/posts/{post_id}/comment", response_model=CommentRead)
+async def comment_on_post(
     post_id: int,
-    comment: PostComment,
+    payload: CommentCreate,
     current_user: User = Depends(get_current_user),
 ):
     """Endpoint untuk mengomentari sebuah postingan"""
     raise NotImplementedError
 
 
-@router.post("/posts/{post_id}/like")
-async def like_post(
-    post_id: int,
-    current_user: User = Depends(get_current_user),
+@router.post("/posts/{post_id}/like", response_model=LikeToggleResponse)
+async def toggle_post_like(
+    post_id: int, 
+    current_user: User = Depends(get_current_user)
 ):
     """Endpoint untuk toggle tombol like (like<->dislike) sebuah post"""
     raise NotImplementedError
@@ -66,7 +74,7 @@ async def join_study_room(
     raise NotImplementedError
 
 
-@router.get("/posts/{post_id}/comments", response_model=list[PostComment])
+@router.get("/posts/{post_id}/comments", response_model=list[CommentRead])
 async def get_post_comments(
     post_id: int,
     current_user: User = Depends(get_current_user),

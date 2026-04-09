@@ -3,13 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.permissions import get_current_user
 from app.db.session import get_db
-from app.modules.gamification.services import generate_leaderboard, get_user_achievements, get_user_quests, get_user_rank
+from app.modules.gamification.services import generate_leaderboard, get_user_achievements, get_user_history, get_user_quests, get_user_rank
 from app.users.models import User
 
 from app.modules.gamification.schemas import (
     AchievementItem,
     AchievementSummary,
     AchievementType,
+    HistoryItem,
     LeaderboardPage,
     QuestFrequency,
     QuestItem,
@@ -80,3 +81,13 @@ async def get_leaderboard(
         # TODO: no friends feature yet, update later
         top_friends=await generate_leaderboard(db, 100) 
     )
+
+@router.get("/history", response_model=list[HistoryItem])
+async def get_history(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Endpoint untuk mengambil 50 item terakhir history quest dan achievement terselesaikan
+    """
+    return await get_user_history(db, current_user.id)
