@@ -33,4 +33,5 @@ async def list_earned_certificate(current_user: User = Depends(get_current_user)
     """
     Endpoint untuk melihat list sertifikat yang bisa diunduh user terlogin
     """
-    raise NotImplementedError
+    # TODO: properly implement once quiz module is there
+    return []

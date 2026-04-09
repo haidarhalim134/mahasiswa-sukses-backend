@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from enum import Enum
 from typing import List, Optional
 
-# --- New Enums for Quiz Module ---
 
 class QuizDifficulty(str, Enum):
     EASY = "easy"
@@ -13,8 +12,6 @@ class QuizDifficulty(str, Enum):
 class QuizStatus(str, Enum):
     BELUM_DIMULAI = "belum dimulai"
     SELESAI = "selesai"
-
-# --- New Schemas ---
 
 class QuizOverview(BaseModel):
     id: int
@@ -40,7 +37,7 @@ class QuestionRead(BaseModel):
     timer_seconds: int
 
 class QuizSubmission(BaseModel):
-    answers: dict[int, int]  # Question ID mapping to Option ID
+    answers: dict[int, int] 
 
 class QuizResult(BaseModel):
     correct_answers: int

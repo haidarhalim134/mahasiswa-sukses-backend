@@ -4,8 +4,6 @@ from enum import Enum
 from typing import List, Optional
 from datetime import datetime
 
-# --- Enums ---
-
 class TaskCategory(str, Enum):
     AKADEMIK = "akademik"
     PRIBADI = "pribadi"
@@ -20,8 +18,6 @@ class TaskProgress(str, Enum):
     TODO = "todo"
     ON_PROGRESS = "proses"
     DONE = "selesai"
-
-# --- Schemas ---
 
 class TaskBase(BaseModel):
     title: str

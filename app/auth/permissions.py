@@ -55,7 +55,6 @@ async def get_current_user(
     return current_user
 
 
-# --- Authz (Authorization) ---
 def require_user(
     role: Optional[Role] = None,
     roles: Optional[List[Role]] = None,
