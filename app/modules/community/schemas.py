@@ -37,11 +37,6 @@ class LikeToggleResponse(BaseModel):
     likes_count: int
     is_liked: bool
 
-class StudyRoomRead(ForumPostRead):
-    current_participants: int
-    max_participants: int
-    is_joined: bool = False
-
 class CommunityStats(BaseModel):
     online_count: int
     active_rooms_count: int
@@ -51,3 +46,30 @@ class ForumFeedParams(BaseModel):
     tag: Optional[str] = None
     limit: int = Field(20, ge=1, le=100)
     offset: int = Field(0, ge=0)
+
+
+class ChatMessageCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=1000)
+
+class ChatMessageRead(BaseModel):
+    id: int
+    room_id: int
+    author: PublicUserView
+    content: str
+    created_at: datetime
+
+class StudyRoomRead(BaseModel):
+    id: int
+    title: str
+    description: str
+    author: PublicUserView
+    current_participants: int
+    max_participants: int
+    is_joined: bool = False
+    is_active: bool = True
+    created_at: datetime
+
+class JoinRoomResponse(BaseModel):
+    success: bool
+    message: str
+    room_details: StudyRoomRead
