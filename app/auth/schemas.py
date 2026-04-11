@@ -19,6 +19,14 @@ class RegisterRequest(BaseModel):
             raise ValueError("Invalid phone number format")
         return v
 
+    @field_validator("nim")
+    def validate_nim(cls, v):
+        if v is None:
+            return v
+        if not v.isdigit():
+            raise ValueError("NIM must contain only digits")
+        return v
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
