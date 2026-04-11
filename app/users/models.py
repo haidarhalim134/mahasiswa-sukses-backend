@@ -45,8 +45,8 @@ class User(Base, table=True):
 
     nim: Optional[str] = Field(
         default=None,
-        index=True,
-        unique=True
+        unique=True,
+        nullable=True
     )
 
     full_name: str = Field(
