@@ -12,7 +12,7 @@ async def create_user_profile(
     user_id: UUID,
     email: str,
     phone_number: str,
-    # nim: str,
+    nim: str,
     full_name: str,
     birth_date: date,
 ):
@@ -20,7 +20,7 @@ async def create_user_profile(
         id=user_id,
         email=email,
         phone_number=phone_number,
-        # nim=nim,
+        nim=nim,
         full_name=full_name,
         birth_date=birth_date,
     )

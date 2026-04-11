@@ -9,7 +9,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
     phone_number: str
-    # nim: str
+    nim: str | None = None
     full_name: str
     birth_date: date
 
