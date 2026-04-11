@@ -1,5 +1,6 @@
 from datetime import date
-from pydantic import BaseModel, EmailStr, Field
+import re
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from enum import Enum
 
 from app.users.models import User
@@ -11,6 +12,12 @@ class RegisterRequest(BaseModel):
     # nim: str
     full_name: str
     birth_date: date
+
+    @field_validator("phone_number")
+    def validate_phone(cls, v):
+        if not re.match(r"^\+?\d{9,20}$", v):
+            raise ValueError("Invalid phone number format")
+        return v
 
 
 class LoginRequest(BaseModel):
