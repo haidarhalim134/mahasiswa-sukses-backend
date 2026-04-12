@@ -43,6 +43,7 @@ async def reset_quests_by_frequency(
         .values(
             progress=0,
             is_completed=False,
+            last_progress_at=None
         )
     )
 
@@ -56,7 +57,7 @@ async def progress_quest(
     amount: int = 1,
 ):
     """
-    Progress quests based on event
+    Progress quests based on event, for quest with cooldown first call will start the cooldown and the next call after cooldown will progress the quest
     """
 
     quest_defs = get_quest_def_by_event(event)
