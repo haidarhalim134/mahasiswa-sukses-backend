@@ -84,16 +84,24 @@ async def progress_quest(
         if quest.is_completed:
             continue
 
-        if QuestEvent.STAY_1_HOUR and quest.last_progress_at:
+        cooldown = None
+        if event ==  QuestEvent.STAY_10_MIN:
+            cooldown = 9
+        elif event == QuestEvent.STAY_1_HOUR:
+            cooldown = 55
+
+        if cooldown and quest.last_progress_at:
             delta = now - quest.last_progress_at
 
             minutes = int(delta.total_seconds() // 60)
 
             # soft anticheat, need to wait 9 min before progressing
-            if minutes <= 9:
+            if minutes <= cooldown:
                 continue
 
-        quest.progress += amount
+        if not cooldown or quest.last_progress_at:
+            quest.progress += amount
+
         quest.last_progress_at = now
 
         if not quest.is_completed and quest.progress >= quest.target:

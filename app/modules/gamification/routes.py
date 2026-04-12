@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.permissions import get_current_user
 from app.db.session import get_db
-from app.modules.gamification.services import generate_leaderboard, get_user_achievements, get_user_history, get_user_quests, get_user_rank
+from app.modules.gamification.services import generate_leaderboard, get_user_achievements, get_user_history, get_user_quests, get_user_rank, progress_quest
 from app.users.models import User
 
 from app.modules.gamification.schemas import (
@@ -12,6 +12,7 @@ from app.modules.gamification.schemas import (
     AchievementType,
     HistoryItem,
     LeaderboardPage,
+    QuestEvent,
     QuestFrequency,
     QuestItem,
 )
@@ -91,3 +92,24 @@ async def get_history(
     Endpoint untuk mengambil 50 item terakhir history quest dan achievement terselesaikan
     """
     return await get_user_history(db, current_user.id)
+
+@router.post("/heartbeat")
+async def heartbeat(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Endpoint untuk progress quest stay di aplikasi, panggil setiap 10 menit
+    """
+
+    await progress_quest(
+        db=db,
+        user=user,
+        event=QuestEvent.STAY_1_HOUR
+    )
+
+    await progress_quest(
+        db=db,
+        user=user,
+        event=QuestEvent.STAY_10_MIN
+    )
