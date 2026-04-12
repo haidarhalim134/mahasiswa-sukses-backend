@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from supabase_auth.errors import AuthInvalidJwtError
 
 import app.auth.routes as auth
 from app.core.scheduler import get_scheduler
@@ -55,8 +56,17 @@ app.add_middleware(
 async def global_exception_handler(request: Request, exc: Exception):
     response = {"error": "Internal Server Error"}
 
+    if isinstance(exc, AuthInvalidJwtError):
+        return JSONResponse(
+            status_code=401,
+            content={
+                "error": exc.__class__.__name__, 
+                "detail": str(exc)
+            }
+        )
+
     if settings.show_error_details:
-        response["error_name"] = exc.__class__.__name__
+        response["error"] = exc.__class__.__name__
         response["detail"] = str(exc)
         response["traceback"] = traceback.format_exc()
 
