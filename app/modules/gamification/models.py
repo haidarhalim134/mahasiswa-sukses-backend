@@ -30,6 +30,14 @@ class UserQuest(Base, table=True):
         sa_column=Column(String, nullable=False),
     )
 
+    last_progress_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=True
+        )
+    )
+
 class UserAchievement(Base, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
