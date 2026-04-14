@@ -26,7 +26,14 @@ async def get_my_profile(
     current_user: User = Depends(get_current_user),
 ):
     """Endpoint untuk mengambil data profile user"""
-    raise NotImplementedError
+    return UserProfile(
+        id=current_user.id,
+        email=current_user.email,
+        full_name=current_user.full_name,
+        phone_number=current_user.phone_number,
+        nim=current_user.nim,
+        birth_date=current_user.birth_date
+    )
 
 
 @router.post("/profile", response_model=UserProfile)
