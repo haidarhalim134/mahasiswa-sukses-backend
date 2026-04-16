@@ -36,7 +36,7 @@ async def get_forum_feed(
     db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk mengambil list postingan"""
-    return await services.get_feed(db, params, current_user.id)
+    return await services.get_forum_feed(db, params, current_user.id)
 
 
 @router.post("/posts", response_model=ForumPostRead, status_code=201)

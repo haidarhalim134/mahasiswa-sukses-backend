@@ -1,5 +1,6 @@
 from datetime import datetime
 from uuid import UUID
+from fastapi import HTTPException
 from sqlmodel import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -56,7 +57,7 @@ async def get_post(db: AsyncSession, post_id: int, user_id: UUID) -> ForumPostRe
     return await _build_post_response(db, post, user_id)
 
 
-async def get_feed(db: AsyncSession, params: ForumFeedParams, user_id: UUID) -> list[ForumPostRead]:
+async def get_forum_feed(db: AsyncSession, params: ForumFeedParams, user_id: UUID) -> list[ForumPostRead]:
     stmt = select(ForumPost).order_by(desc(ForumPost.created_at))
 
     if params.tag:
@@ -174,6 +175,16 @@ async def toggle_like(db, user_id, post_id) -> LikeToggleResponse:
 async def join_room(db, user_id, room_id) -> StudyRoomRead:
     room: StudyRoom = await db.get(StudyRoom, room_id)
 
+    # TODO: handle potential race condition
+    current_participant_count = await db.scalar(
+        select(func.count()).where(StudyRoomParticipant.room_id == room_id)
+    )
+    if current_participant_count >= room.max_participants:
+        raise HTTPException(
+            status_code=403,
+            detail="Room is full"
+        )
+
     participant = StudyRoomParticipant(
         room_id=room_id,
         user_id=user_id
@@ -183,14 +194,11 @@ async def join_room(db, user_id, room_id) -> StudyRoomRead:
 
     author = user_to_public_view(room.author)
 
-    current_participant_count = await db.scalar(
-        select(func.count()).where(StudyRoomParticipant.room_id == room_id)
-    )
-
     return StudyRoomRead(
         **room.model_dump(),
         author=author,
-        current_participants=current_participant_count
+        is_joined=True,
+        current_participants=current_participant_count + 1
     )
 
 
