@@ -28,6 +28,7 @@ from app.db.base import Base
 import app.users.models
 import app.modules.gamification.models
 import app.modules.progress_tracking.models
+import app.modules.community.models
 
 target_metadata = Base.metadata
 
