@@ -13,12 +13,12 @@ from app.users.service import get_user_by_id
 router = APIRouter(prefix="/api/v1/user", tags=["user"])
 
 
-@router.get("/stats", response_model=UserStats)
-async def get_user_stats(
-    current_user: User = Depends(get_current_user),
-):
-    """Endpoint untuk mengambil data stats homescreen"""
-    raise NotImplementedError
+# @router.get("/stats", response_model=UserStats)
+# async def get_user_stats(
+#     current_user: User = Depends(get_current_user),
+# ):
+#     """Endpoint untuk mengambil data stats homescreen"""
+#     raise NotImplementedError
 
 
 @router.get("/profile", response_model=UserProfile)
@@ -60,7 +60,7 @@ async def update_settings(
     settings: SettingsUpdate,
     current_user: User = Depends(get_current_user),
 ):
-    """Toggles the 'Notifikasi' switch in the Preferensi section."""
+    """Endpoint untuk memperbarui setting profile mahasiswa"""
     raise NotImplementedError
 
 @router.get(
