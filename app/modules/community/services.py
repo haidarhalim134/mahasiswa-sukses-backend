@@ -57,7 +57,6 @@ async def get_post(db: AsyncSession, post_id: int, user_id: UUID) -> ForumPostRe
 
 
 async def get_feed(db: AsyncSession, params: ForumFeedParams, user_id: UUID) -> list[ForumPostRead]:
-    # TODO: properly handle study room and forum tab
     stmt = select(ForumPost).order_by(desc(ForumPost.created_at))
 
     if params.tag:

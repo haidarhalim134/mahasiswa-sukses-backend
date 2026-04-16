@@ -49,7 +49,6 @@ class CommunityStats(BaseModel):
     active_rooms_count: int
 
 class ForumFeedParams(BaseModel):
-    tab: ForumTab = ForumTab.POSTINGAN
     tag: Optional[str] = None
     limit: int = Field(20, ge=1, le=100)
     offset: int = Field(0, ge=0)

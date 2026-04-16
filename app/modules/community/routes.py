@@ -29,7 +29,7 @@ async def get_community_stats(
 
 
 ## posts
-@router.get("/feed", response_model=list[ForumPostRead])
+@router.get("/feed/forum", response_model=list[ForumPostRead])
 async def get_forum_feed(
     params: ForumFeedParams = Depends(),
     current_user: User = Depends(get_current_user),
