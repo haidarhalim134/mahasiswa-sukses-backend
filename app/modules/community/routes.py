@@ -1,82 +1,103 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.auth.permissions import get_current_user
-from app.users.models import User
-from .schemas import (
-    ChatMessageCreate, ChatMessageRead, CommunityStats, ForumFeedParams, ForumPostCreate, 
-    ForumPostRead, CommentRead, CommentCreate, JoinRoomResponse, LikeToggleResponse
+from app.db.session import get_db
+from app.modules.community import services
+from app.modules.community.schemas import (
+    ChatMessageCreate, ChatMessageRead,
+    CommentCreate, CommentRead,
+    CommunityStats,
+    ForumFeedParams,
+    ForumPostCreate, ForumPostRead,
+    LikeToggleResponse, StudyRoomRead
 )
+from app.users.models import User
+
 
 router = APIRouter(prefix="/api/v1/community", tags=["community"])
 
 
+## stats
 @router.get("/stats", response_model=CommunityStats)
 async def get_community_stats(
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk mengambil estimasi jumlah user online"""
-    raise NotImplementedError
+    return await services.get_stats(db)
 
 
+## posts
 @router.get("/feed", response_model=list[ForumPostRead])
 async def get_forum_feed(
     params: ForumFeedParams = Depends(),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk mengambil list postingan"""
-    raise NotImplementedError
+    return await services.get_feed(db, params, current_user.id)
 
 
-## postingan
 @router.post("/posts", response_model=ForumPostRead, status_code=201)
 async def create_post(
     post: ForumPostCreate,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk membuat post baru"""
-    raise NotImplementedError
+    return await services.create_post(db, current_user.id, post)
 
 
 @router.get("/posts/{post_id}", response_model=ForumPostRead)
 async def get_post_detail(
-    post_id: int, 
-    current_user: User = Depends(get_current_user)
+    post_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk mengambil detail lengkap satu postingan"""
-    raise NotImplementedError
+    return await services.get_post(db, post_id, current_user.id)
 
 
+## comments
 @router.post("/posts/{post_id}/comment", response_model=CommentRead)
 async def comment_on_post(
     post_id: int,
     payload: CommentCreate,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk mengomentari sebuah postingan"""
-    raise NotImplementedError
+    return await services.create_comment(db, current_user.id, post_id, payload)
 
-
-@router.post("/posts/{post_id}/like", response_model=LikeToggleResponse)
-async def toggle_post_like(
-    post_id: int, 
-    current_user: User = Depends(get_current_user)
-):
-    """Endpoint untuk toggle tombol like (like<->dislike) sebuah post"""
-    raise NotImplementedError
 
 @router.get("/posts/{post_id}/comments", response_model=list[CommentRead])
 async def get_post_comments(
     post_id: int,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk mengambil list komentar sebuah posting"""
-    raise NotImplementedError
+    return await services.get_comments(db, post_id)
+
+
+## like
+@router.post("/posts/{post_id}/like", response_model=LikeToggleResponse)
+async def toggle_post_like(
+    post_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Endpoint untuk toggle tombol like (like<->dislike) sebuah post"""
+    return await services.toggle_like(db, current_user.id, post_id)
 
 
 ## study room
-@router.post("/rooms/{room_id}/join", response_model=JoinRoomResponse)
+@router.post("/rooms/{room_id}/join", response_model=StudyRoomRead)
 async def join_study_room(
     room_id: int,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Endpoint untuk join study room. 
@@ -103,20 +124,32 @@ async def join_study_room(
     5. Auth:
        Gunakan Access Token (JWT) yang didapat saat login untuk inisialisasi Supabase client.
     """
-    raise NotImplementedError
+    return await services.join_room(db, current_user.id, room_id)
 
 
+@router.delete("/rooms/{room_id}/leave")
+async def leave_study_room(
+    room_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Endpoint untuk meninggalkan study room"""
+    await services.leave_room(db, current_user.id, room_id)
+
+
+## chat
 @router.get("/rooms/{room_id}/messages", response_model=list[ChatMessageRead])
 async def get_chat_history(
     room_id: int,
     limit: int = Query(50, ge=1, le=100),
     before_id: int | None = None,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Endpoint untuk mengambil chat history terbaru, panggil saat pertama kali join room.
     """
-    raise NotImplementedError
+    return await services.get_messages(db, room_id, limit, before_id)
 
 
 @router.post("/rooms/{room_id}/messages", response_model=ChatMessageRead)
@@ -124,17 +157,9 @@ async def send_chat_message(
     room_id: int,
     payload: ChatMessageCreate,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Endpoint untuk mengirim pesan ke study room.
     """
-    raise NotImplementedError
-
-
-@router.delete("/rooms/{room_id}/leave")
-async def leave_study_room(
-    room_id: int,
-    current_user: User = Depends(get_current_user),
-):
-    """Endpoint untuk meninggalkan study room"""
-    raise NotImplementedError
+    return await services.send_message(db, current_user, room_id, payload)

@@ -1,12 +1,12 @@
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from app.users.schemas import PublicUserView
 
 class ForumTab(str, Enum):
     POSTINGAN = "postingan"
-    RUANG_BELAJAR = "ruang belajar"
+    RUANG_BELAJAR = "ruang_belajar"
 
 class CommentCreate(BaseModel):
     comment: str = Field(..., min_length=1, max_length=500)
@@ -21,6 +21,13 @@ class ForumPostBase(BaseModel):
     title: str
     content: str
     tags: List[str] = []
+
+    @field_validator("tags")
+    def validate_tags_no_comma(cls, tags: List[str]) -> List[str]:
+        for tag in tags:
+            if "," in tag:
+                raise ValueError("Tags must not contain commas")
+        return tags
 
 class ForumPostCreate(ForumPostBase):
     pass
@@ -68,8 +75,3 @@ class StudyRoomRead(BaseModel):
     is_joined: bool = False
     is_active: bool = True
     created_at: datetime
-
-class JoinRoomResponse(BaseModel):
-    success: bool
-    message: str
-    room_details: StudyRoomRead

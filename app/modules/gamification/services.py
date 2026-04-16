@@ -362,7 +362,6 @@ async def get_user_history(
     user_id: UUID
 ) -> list[HistoryItem]:
 
-    # Fetch latest 50 quest history
     quest_result = await db.execute(
         select(
             QuestHistory.id,
@@ -375,7 +374,6 @@ async def get_user_history(
         .limit(50)
     )
 
-    # Fetch latest 50 achievement history
     achievement_result = await db.execute(
         select(
             AchievementHistory.id,
@@ -408,8 +406,6 @@ async def get_user_history(
             completed_at=a.completed_at
         ))
 
-    # Final sort (merge both sources)
     history.sort(key=lambda x: x.completed_at, reverse=True)
 
-    # Hard limit to 50 total items
     return history[:50]

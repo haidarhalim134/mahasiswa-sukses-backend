@@ -5,6 +5,7 @@ from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.users.models import User
+from app.users.schemas import PublicUserView
 
 
 async def create_user_profile(
@@ -41,3 +42,9 @@ async def get_user_by_id(
     result = await db.execute(stmt)
 
     return result.scalar_one_or_none()
+
+def user_to_public_view(user: User):
+    return PublicUserView(
+        id=user.id,
+        full_name=user.full_name
+    )
