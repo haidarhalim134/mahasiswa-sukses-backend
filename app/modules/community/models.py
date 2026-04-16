@@ -60,14 +60,12 @@ class Comment(Base, table=True):
 class PostLike(Base, table=True):
     __tablename__ = "forum_post_likes"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-
     post_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("forum_posts.id"), nullable=False, index=True)
+        sa_column=Column(Integer, ForeignKey("forum_posts.id"), primary_key=True, nullable=False, index=True)
     )
 
     user_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True, nullable=False)
     )
 
 
@@ -104,14 +102,12 @@ class StudyRoom(Base, table=True):
 class StudyRoomParticipant(Base, table=True):
     __tablename__ = "study_room_participants"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-
     room_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("study_rooms.id"), nullable=False)
+        sa_column=Column(Integer, ForeignKey("study_rooms.id"), primary_key=True, nullable=False)
     )
 
     user_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True, nullable=False)
     )
 
 
