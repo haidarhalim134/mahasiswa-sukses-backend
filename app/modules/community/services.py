@@ -217,7 +217,9 @@ async def leave_room(db, user_id, room_id):
 
 
 ## chat
-async def get_messages(db, room_id, limit, before_id) -> list[ChatMessageRead]:
+async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessageRead]:
+    _check_study_room_membership(db, user_id, room_id)
+
     stmt = select(ChatMessage).where(ChatMessage.room_id == room_id)
 
     if before_id:
@@ -241,6 +243,8 @@ async def get_messages(db, room_id, limit, before_id) -> list[ChatMessageRead]:
 
 
 async def send_message(db, user, room_id, payload) -> ChatMessageRead:
+    _check_study_room_membership(db, user.id, room_id)
+
     msg = ChatMessage(
         room_id=room_id,
         author_id=user.id,
@@ -260,3 +264,17 @@ async def send_message(db, user, room_id, payload) -> ChatMessageRead:
         content=msg.content,
         created_at=msg.created_at
     )
+
+async def _check_study_room_membership(db, user_id, room_id):
+    result = await db.execute(
+        select(StudyRoomParticipant).where(
+            StudyRoomParticipant.room_id == room_id,
+            StudyRoomParticipant.user_id == user_id
+        ).limit(1)
+    )
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(
+            status_code=403,
+            detail="Study room member only endpoint"
+        )

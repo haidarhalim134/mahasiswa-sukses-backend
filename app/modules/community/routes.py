@@ -149,7 +149,7 @@ async def get_chat_history(
     """
     Endpoint untuk mengambil chat history terbaru, panggil saat pertama kali join room.
     """
-    return await services.get_messages(db, room_id, limit, before_id)
+    return await services.get_messages(db, current_user.id, room_id, limit, before_id)
 
 
 @router.post("/rooms/{room_id}/messages", response_model=ChatMessageRead)
