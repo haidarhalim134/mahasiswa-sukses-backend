@@ -15,7 +15,7 @@ async def get_all_quizzes(
     current_user: User = Depends(get_current_user),
 ):
     """Endpoint untuk mengambil semua quiz tersedia bersama status pengerjaanya"""
-    raise NotImplementedError
+    return []
 
 
 @router.post("/quizzes/{quiz_id}/start", response_model=QuestionRead)
