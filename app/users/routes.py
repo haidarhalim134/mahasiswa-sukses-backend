@@ -80,14 +80,14 @@ async def upload_avatar(
         content_type="image/webp"
     )
 
-    # delete old image (try to atleast)
-    try:
-        await storage.delete(
-            bucket=Buckets.AVATAR.value,
-            path=path
-        )
-    except:
-        pass
+    # # delete old image (try to atleast)
+    # try:
+    #     await storage.delete(
+    #         bucket=Buckets.AVATAR.value,
+    #         path=path
+    #     )
+    # except:
+    #     pass
 
 
 # 3. Preferences & Account
