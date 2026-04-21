@@ -71,10 +71,6 @@ async def upload_avatar(
         content_type=file.content_type
     )
 
-    return {
-        "avatar_url": storage.get_public_url(Buckets.AVATAR.value, path)
-    }
-
 
 # 3. Preferences & Account
 @router.post("/settings")
