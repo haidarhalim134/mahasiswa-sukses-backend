@@ -1,7 +1,7 @@
 import requests
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
-from app.core.scheduler import TaskData
+from app.modules.task.schemas import TaskData
 from app.core.scheduler.base_scheduler import BaseScheduler
 
 

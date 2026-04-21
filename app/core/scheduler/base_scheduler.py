@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from app.core.scheduler import TaskData
+from app.modules.task.schemas import TaskData
 
 class BaseScheduler(ABC):
     task_execute_url: str

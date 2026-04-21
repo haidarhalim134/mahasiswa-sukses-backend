@@ -2,7 +2,7 @@ from fastapi import APIRouter, Body, Depends, Response, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.scheduler import TaskData, TaskGroup
+from app.modules.task.schemas import TaskData, TaskGroup
 from app.db.session import get_db
 from app.modules.gamification.schemas import QuestFrequency
 from app.modules.gamification.services import reset_quests_by_frequency

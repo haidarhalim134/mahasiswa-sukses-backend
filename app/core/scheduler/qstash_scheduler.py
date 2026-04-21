@@ -2,7 +2,7 @@ from qstash import QStash
 import os
 
 from app.core.config import settings
-from app.core.scheduler import TaskData
+from app.modules.task.schemas import TaskData
 from app.core.scheduler.base_scheduler import BaseScheduler
 
 qstash = QStash(settings.qstash_token)

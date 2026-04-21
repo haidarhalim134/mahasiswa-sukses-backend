@@ -5,8 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase_auth.errors import AuthInvalidJwtError
 
 import app.auth.routes as auth
-from app.core.scheduler import QuestResetTask, get_scheduler
+from app.core.scheduler import get_scheduler
 from app.modules.gamification.schemas import QuestFrequency
+from app.modules.task.schemas import QuestResetTask
 import app.users.routes as user
 import app.modules.community.routes as community
 import app.modules.gamification.routes as gamification
