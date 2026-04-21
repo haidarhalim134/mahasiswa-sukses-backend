@@ -5,7 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase_auth.errors import AuthInvalidJwtError
 
 import app.auth.routes as auth
-from app.core.scheduler import get_scheduler
+from app.core.scheduler import QuestResetTask, get_scheduler
+from app.modules.gamification.schemas import QuestFrequency
 import app.users.routes as user
 import app.modules.community.routes as community
 import app.modules.gamification.routes as gamification
@@ -26,17 +27,9 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # base_url = os.getenv("BASE_URL")
-    # if not base_url:
-    #     base_url = os.getenv("VERCEL_PROJECT_PRODUCTION_URL")
-    #     if base_url: 
-    #         base_url = "https://" + base_url
-    
-    # # silent skip for now
-    # if base_url:
-    #     scheduler = get_scheduler()
-    #     scheduler.schedule_daily(f"{base_url}/api/v1/task/daily", settings.task_token)
-    #     scheduler.schedule_weekly(f"{base_url}/api/v1/task/weekly", settings.task_token)
+    # scheduler = get_scheduler()
+    # scheduler.schedule_daily(QuestResetTask(frequency=QuestFrequency.DAILY), settings.task_token)
+    # scheduler.schedule_weekly(QuestResetTask(frequency=QuestFrequency.WEEKLY), settings.task_token)
     yield
 
 

@@ -1,6 +1,7 @@
 import requests
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
+from app.core.scheduler import TaskData
 from app.core.scheduler.base_scheduler import BaseScheduler
 
 
@@ -8,32 +9,41 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 
 class VPSScheduler(BaseScheduler):
-    def schedule_daily(self, task_url: str, secret: str):
+    def schedule_daily(self, task_data: TaskData, secret: str):
         scheduler.add_job(
-            lambda: requests.post(task_url + f"?task_token={secret}"),
+            lambda: requests.post(
+                url=self.task_execute_url + f"?task_token={secret}",
+                json=task_data.model_dump_json()
+            ),
             trigger="cron",
             hour=0,
             minute=0,
-            id="daily_task",
+            id=task_data.get_schedule_id(),
             replace_existing=True,
         )
 
-    def schedule_weekly(self, task_url: str, secret: str):
+    def schedule_weekly(self, task_data: TaskData, secret: str):
         scheduler.add_job(
-            lambda: requests.post(task_url + f"?task_token={secret}"),
+            lambda: requests.post(
+                url=self.task_execute_url + f"?task_token={secret}",
+                json=task_data.model_dump_json()
+            ),
             trigger="cron",
             day_of_week="sun",
             hour=0,
             minute=0,
-            id="weekly_task",
+            id=task_data.get_schedule_id(),
             replace_existing=True,
         )
 
-    def schedule_delayed(self, task_url: str, secret: str, delay_seconds: int):
+    def schedule_delayed(self, task_data: TaskData, secret: str, delay_seconds: int):
         run_time = datetime.utcnow() + timedelta(seconds=delay_seconds)
 
         scheduler.add_job(
-            lambda: requests.post(task_url + f"?task_token={secret}"),
+            lambda: requests.post(
+                url=self.task_execute_url + f"?task_token={secret}",
+                json=task_data.model_dump_json()
+            ),
             trigger="date",
             run_date=run_time,
         )
