@@ -1,9 +1,11 @@
+import mimetypes
 from uuid import UUID
 from fastapi import APIRouter, File, HTTPException, Response, UploadFile, Depends
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.permissions import get_current_user
+from app.core.storage_handler import Buckets, get_storage
 from app.db.session import get_db
 from app.users.models import User
 from app.users.schemas import ProfileUpdate, SettingsUpdate, UserProfile, UserStats
@@ -51,7 +53,27 @@ async def upload_avatar(
     current_user: User = Depends(get_current_user),
 ):
     """Endpoint untuk memperbarui avatar user"""
-    raise NotImplementedError
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(400, "File must be an image")
+
+    storage = get_storage()
+
+    # safer extension detection
+    ext = mimetypes.guess_extension(file.content_type) or ".png"
+    ext = ext.lstrip(".")
+
+    path = f"user_avatars/{current_user.id}.{ext}"
+
+    await storage.upload(
+        file=file.file,
+        bucket=Buckets.AVATAR.value,
+        path=path,
+        content_type=file.content_type
+    )
+
+    return {
+        "avatar_url": storage.get_public_url(Buckets.AVATAR.value, path)
+    }
 
 
 # 3. Preferences & Account
@@ -74,15 +96,23 @@ async def update_settings(
 )
 async def get_avatar(
     user_id: UUID, 
-    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Endpoint untuk mengambil avatar user tertentu"""
-
-    user = await get_user_by_id(db, user_id)  # implement this
+    user = await get_user_by_id(db, user_id)
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    storage = get_storage()
+
+    path = f"{user_id}.png"
+
+    try:
+        data = await storage.download(Buckets.AVATAR.value, path)
+        return Response(content=data, media_type="image/png")
+    except Exception:
+        pass
 
     if not user.full_name:
         raise HTTPException(status_code=400, detail="User full name not available")
