@@ -13,7 +13,8 @@ class VPSScheduler(BaseScheduler):
         scheduler.add_job(
             lambda: requests.post(
                 url=self.task_execute_url + f"?task_token={secret}",
-                json=task_data.model_dump_json()
+                json=task_data.model_dump_json(),
+                headers={"Content-Type": "application/json"}, 
             ),
             trigger="cron",
             hour=0,
@@ -26,7 +27,8 @@ class VPSScheduler(BaseScheduler):
         scheduler.add_job(
             lambda: requests.post(
                 url=self.task_execute_url + f"?task_token={secret}",
-                json=task_data.model_dump_json()
+                json=task_data.model_dump_json(),
+                headers={"Content-Type": "application/json"}, 
             ),
             trigger="cron",
             day_of_week="sun",
@@ -43,6 +45,7 @@ class VPSScheduler(BaseScheduler):
             lambda: requests.post(
                 url=self.task_execute_url + f"?task_token={secret}",
                 json=task_data.model_dump_json()
+                headers={"Content-Type": "application/json"}, 
             ),
             trigger="date",
             run_date=run_time,

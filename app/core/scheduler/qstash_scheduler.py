@@ -13,6 +13,7 @@ class QStashScheduler(BaseScheduler):
             destination=self.task_execute_url + f"?task_token={secret}",
             cron="0 0 * * *",
             body=task_data.model_dump_json(), 
+            headers={"Content-Type": "application/json"}, 
             schedule_id=task_data.get_schedule_id(),
         )
 
@@ -21,6 +22,7 @@ class QStashScheduler(BaseScheduler):
             destination=self.task_execute_url + f"?task_token={secret}",
             cron="0 0 * * 0",
             body=task_data.model_dump_json(), 
+            headers={"Content-Type": "application/json"}, 
             schedule_id=task_data.get_schedule_id(),
         )
 
@@ -28,5 +30,6 @@ class QStashScheduler(BaseScheduler):
         qstash.message.publish_json(
             url=self.task_execute_url + f"?task_token={secret}",
             body=task_data.model_dump_json(), 
+            headers={"Content-Type": "application/json"}, 
             delay=delay_seconds,
         )
