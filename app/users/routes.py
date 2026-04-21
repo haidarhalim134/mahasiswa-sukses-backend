@@ -1,4 +1,5 @@
-import mimetypes
+import io
+from PIL import Image
 from uuid import UUID
 from fastapi import APIRouter, File, HTTPException, Response, UploadFile, Depends
 import httpx
@@ -58,18 +59,35 @@ async def upload_avatar(
 
     storage = get_storage()
 
-    # safer extension detection
-    ext = mimetypes.guess_extension(file.content_type) or ".png"
-    ext = ext.lstrip(".")
+    contents = await file.read()
+    image = Image.open(io.BytesIO(contents))
 
-    path = f"user_avatars/{current_user.id}.{ext}"
+    if image.mode in ("RGBA", "P"):
+        image = image.convert("RGB")
+
+    image.thumbnail((512, 512))
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="WEBP", quality=80, optimize=True)
+    buffer.seek(0)
+
+    path = f"{current_user.id}.webp"
 
     await storage.upload(
-        file=file.file,
+        file=buffer,
         bucket=Buckets.AVATAR.value,
         path=path,
-        content_type=file.content_type
+        content_type="image/webp"
     )
+
+    # delete old image (try to atleast)
+    try:
+        await storage.delete(
+            bucket=Buckets.AVATAR.value,
+            path=path
+        )
+    except:
+        pass
 
 
 # 3. Preferences & Account
@@ -102,11 +120,11 @@ async def get_avatar(
 
     storage = get_storage()
 
-    path = f"{user_id}.png"
+    path = f"{user_id}.webp"
 
     try:
         data = await storage.download(Buckets.AVATAR.value, path)
-        return Response(content=data, media_type="image/png")
+        return Response(content=data, media_type="image/webp")
     except Exception:
         pass
 
@@ -114,7 +132,7 @@ async def get_avatar(
         raise HTTPException(status_code=400, detail="User full name not available")
 
     name_query = user.full_name.replace(" ", "+")
-    url = f"https://ui-avatars.com/api/?name={name_query}&format=png"
+    url = f"https://ui-avatars.com/api/?name={name_query}&format=webp"
 
     async with httpx.AsyncClient() as client:
         resp = await client.get(url)
@@ -122,4 +140,4 @@ async def get_avatar(
     if resp.status_code != 200:
         raise HTTPException(status_code=502, detail="Failed to fetch avatar")
 
-    return Response(content=resp.content, media_type="image/png")
+    return Response(content=resp.content, media_type="image/webp")
