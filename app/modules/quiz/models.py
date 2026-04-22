@@ -41,7 +41,7 @@ class QuizQuestion(Base, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     quiz_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("quizzes.id"), nullable=False, index=True)
+        sa_column=Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
     )
     quiz: Quiz = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[QuizQuestion.quiz_id]"}
@@ -64,14 +64,14 @@ class QuizAttempt(Base, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     quiz_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("quizzes.id"), nullable=False, index=True)
+        sa_column=Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
     )
     quiz: Quiz = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[QuizAttempt.quiz_id]"}
     )
 
     user_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     )
     user: User = Relationship(sa_relationship_kwargs={"foreign_keys": "[QuizAttempt.user_id]"})
 
@@ -102,12 +102,12 @@ class QuizAttemptAnswer(Base, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     attempt_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("quiz_attempts.id"), nullable=False, index=True)
+        sa_column=Column(Integer, ForeignKey("quiz_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
     )
     attempt: QuizAttempt = Relationship(back_populates="answers")
 
     question_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("quiz_questions.id"), nullable=False, index=True)
+        sa_column=Column(Integer, ForeignKey("quiz_questions.id", ondelete="CASCADE"), nullable=False, index=True)
     )
     selected_option: QuizOption = Field(
         sa_column=Column(String, nullable=False)
