@@ -73,7 +73,7 @@ class ChatMessageRead(BaseModel):
 class StudyRoomBase(BaseModel):
     title: str
     description: str
-    max_participants: int
+    max_participants: int = Field(le=21)
 
 class StudyRoomCreate(StudyRoomBase):
     pass
