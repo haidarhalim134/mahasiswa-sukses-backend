@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.modules.task.schemas import TaskData
 from app.core.scheduler.base_scheduler import BaseScheduler
@@ -39,7 +39,7 @@ class VPSScheduler(BaseScheduler):
         )
 
     def schedule_delayed(self, task_data: TaskData, secret: str, delay_seconds: int):
-        run_time = datetime.utcnow() + timedelta(seconds=delay_seconds)
+        run_time = datetime.now(timezone.utc) + timedelta(seconds=delay_seconds)
 
         scheduler.add_job(
             lambda: requests.post(

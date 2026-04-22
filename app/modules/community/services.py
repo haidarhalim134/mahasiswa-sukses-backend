@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 from fastapi import HTTPException
 from sqlmodel import String, cast, or_, select, func, desc
@@ -40,7 +40,7 @@ async def create_post(db: AsyncSession, user_id, payload: ForumPostCreate) -> Fo
         content=payload.content,
         tags=",".join(payload.tags),
         category=payload.category,
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
     db.add(post)
     await db.commit()
@@ -117,7 +117,7 @@ async def create_comment(db, user_id, post_id, payload) -> CommentRead:
         post_id=post_id,
         author_id=user_id,
         comment=payload.comment,
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
     db.add(comment)
     await db.commit()
@@ -213,7 +213,7 @@ async def create_room(db: AsyncSession, user_id, payload: StudyRoomCreate) -> St
         title=payload.title,
         description=payload.description,
         max_participants=payload.max_participants,
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
     db.add(room)
     await db.commit()
@@ -346,7 +346,7 @@ async def send_message(db, user, room_id, payload) -> ChatMessageRead:
         room_id=room_id,
         author_id=user.id,
         content=payload.content,
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
     db.add(msg)
     await db.commit()

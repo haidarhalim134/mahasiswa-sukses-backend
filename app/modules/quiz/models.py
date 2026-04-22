@@ -1,5 +1,5 @@
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import uuid
 
@@ -24,7 +24,7 @@ class Quiz(Base, table=True):
     difficulty: QuizDifficulty = Field(sa_column=Column(String, nullable=False))
     is_active: bool = Field(sa_column=Column(Boolean, nullable=False, default=True))
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda : datetime.now(timezone.utc),
         sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now()),
     )
 
@@ -76,7 +76,7 @@ class QuizAttempt(Base, table=True):
     user: User = Relationship(sa_relationship_kwargs={"foreign_keys": "[QuizAttempt.user_id]"})
 
     status: QuizStatus = Field(sa_column=Column(String, nullable=False, default=QuizStatus.BERJALAN.value))
-    started_at: datetime = Field(default_factory=datetime.utcnow, sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now()))
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now()))
     submitted_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
     exited_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
 
