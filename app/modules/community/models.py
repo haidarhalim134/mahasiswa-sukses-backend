@@ -110,6 +110,17 @@ class StudyRoomParticipant(Base, table=True):
         sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True, nullable=False)
     )
 
+class StudyRoomLike(Base, table=True):
+    __tablename__ = "study_room_likes"
+
+    room_id: int = Field(
+        sa_column=Column(Integer, ForeignKey("study_rooms.id"), primary_key=True, nullable=False, index=True)
+    )
+
+    user_id: uuid.UUID = Field(
+        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True, nullable=False)
+    )
+
 
 class ChatMessage(Base, table=True):
     __tablename__ = "study_room_messages"
