@@ -89,7 +89,7 @@ async def toggle_post_like(
     db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk toggle tombol like (like<->dislike) sebuah post"""
-    return await services.toggle_like(db, current_user.id, post_id)
+    return await services.toggle_post_like(db, current_user.id, post_id)
 
 
 ## study room
@@ -103,13 +103,22 @@ async def get_room_feed(
     return await services.get_room_feed(db, query, current_user.id)
 
 @router.post("/room", response_model=StudyRoomRead, status_code=201)
-async def create_post(
+async def create_room(
     room: StudyRoomCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk membuat room baru"""
     return await services.create_room(db, current_user.id, room)
+
+@router.post("/room/{post_id}/like", response_model=LikeToggleResponse)
+async def toggle_room_like(
+    room_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Endpoint untuk toggle tombol like (like<->dislike) sebuah study room"""
+    return await services.toggle_room_like(db, current_user.id, room_id)
 
 @router.post("/rooms/{room_id}/join", response_model=StudyRoomRead)
 async def join_study_room(

@@ -148,7 +148,7 @@ async def get_comments(db, post_id) -> list[CommentRead]:
 
 
 ## like
-async def toggle_like(db, user_id, post_id) -> LikeToggleResponse:
+async def toggle_post_like(db, user_id, post_id) -> LikeToggleResponse:
     result = await db.execute(
         select(PostLike).where(
             PostLike.post_id == post_id,
@@ -168,6 +168,33 @@ async def toggle_like(db, user_id, post_id) -> LikeToggleResponse:
 
     likes_count = await db.scalar(
         select(func.count()).where(PostLike.post_id == post_id)
+    )
+
+    return LikeToggleResponse(
+        likes_count=likes_count or 0,
+        is_liked=is_liked
+    )
+
+async def toggle_room_like(db, user_id, room_id) -> LikeToggleResponse:
+    result = await db.execute(
+        select(StudyRoomLike).where(
+            StudyRoomLike.room_id == room_id,
+            StudyRoomLike.user_id == user_id
+        )
+    )
+    existing = result.scalar_one_or_none()
+
+    if existing:
+        await db.delete(existing)
+        is_liked = False
+    else:
+        db.add(StudyRoomLike(room_id=room_id, user_id=user_id))
+        is_liked = True
+
+    await db.commit()
+
+    likes_count = await db.scalar(
+        select(func.count()).where(StudyRoomLike.room_id == room_id)
     )
 
     return LikeToggleResponse(
