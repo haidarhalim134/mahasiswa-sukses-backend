@@ -219,13 +219,16 @@ async def create_room(db: AsyncSession, user_id, payload: StudyRoomCreate) -> St
     return await _build_room_response(db, room, user_id)
 
 async def get_room_feed(db: AsyncSession, query: str, user_id: UUID) -> list[StudyRoomRead]:
-    query = f"%{query}%"
-    stmt = select(StudyRoom).where(
-        or_(
-            cast(StudyRoom.title, String).ilike(query),
-            cast(StudyRoom.description, String).ilike(query),
+    stmt = select(StudyRoom)
+    
+    if query:
+        query = f"%{query}%"
+        stmt = stmt.where(
+            or_(
+                cast(StudyRoom.title, String).ilike(query),
+                cast(StudyRoom.description, String).ilike(query),
+            )
         )
-    )
 
     result = await db.execute(stmt)
     rooms = result.scalars().all()
