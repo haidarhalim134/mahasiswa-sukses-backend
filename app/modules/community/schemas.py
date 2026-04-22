@@ -56,6 +56,7 @@ class CommunityStats(BaseModel):
 
 class ForumFeedParams(BaseModel):
     tag: Optional[str] = None
+    category: Optional[ForumCategory] = None
     limit: int = Field(20, ge=1, le=100)
     offset: int = Field(0, ge=0)
 

@@ -66,6 +66,9 @@ async def get_forum_feed(db: AsyncSession, params: ForumFeedParams, user_id: UUI
 
     if params.tag:
         stmt = stmt.where(cast(ForumPost.tags, String).contains(params.tag))
+    
+    if params.category:
+        stmt = stmt.where(ForumPost.category == params.category)
 
     stmt = stmt.offset(params.offset).limit(params.limit)
 
@@ -220,7 +223,7 @@ async def create_room(db: AsyncSession, user_id, payload: StudyRoomCreate) -> St
 
 async def get_room_feed(db: AsyncSession, query: str, user_id: UUID) -> list[StudyRoomRead]:
     stmt = select(StudyRoom)
-    
+
     if query:
         query = f"%{query}%"
         stmt = stmt.where(
