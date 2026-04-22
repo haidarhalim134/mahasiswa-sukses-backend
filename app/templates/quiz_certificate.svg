@@ -1,0 +1,38 @@
+<svg width="3300" height="2550" viewBox="0 0 3300 2550" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="3300" height="2550" fill="white"/>
+<rect x="129" y="129" width="3042" height="2292" stroke="#314E85" stroke-opacity="0.3" stroke-width="6"/>
+<g filter="url(#filter0_d_4_2)">
+<path d="M1648.99 1807.45L1672.89 1827.36L1700.62 1813.27L1719.49 1837.99L1749.66 1830.43L1762.55 1858.73L1793.64 1858.07L1799.92 1888.53L1830.38 1894.8L1829.72 1925.9L1858.02 1938.79L1850.46 1968.96L1875.18 1987.83L1861.09 2015.56L1880.99 2039.45L1861.09 2063.35L1875.18 2091.08L1850.46 2109.95L1858.02 2140.11L1829.72 2153.01L1830.38 2184.1L1799.92 2190.38L1793.64 2220.84L1762.55 2220.18L1749.66 2248.48L1719.49 2240.92L1700.62 2265.64L1672.89 2251.55L1648.99 2271.45L1625.1 2251.55L1597.37 2265.64L1578.5 2240.92L1548.33 2248.48L1535.44 2220.18L1504.35 2220.84L1498.07 2190.38L1467.61 2184.1L1468.27 2153.01L1439.97 2140.11L1447.53 2109.95L1422.81 2091.08L1436.9 2063.35L1416.99 2039.45L1436.9 2015.56L1422.81 1987.83L1447.53 1968.96L1439.97 1938.79L1468.27 1925.9L1467.61 1894.8L1498.07 1888.53L1504.35 1858.07L1535.44 1858.73L1548.33 1830.43L1578.5 1837.99L1597.37 1813.27L1625.1 1827.36L1648.99 1807.45Z" fill="#314E85"/>
+</g>
+<circle cx="1649.48" cy="2038.53" r="197.583" fill="#FFD56A" stroke="#FFD56A" stroke-width="6"/>
+<circle cx="1649.48" cy="2038.53" r="193.566" fill="url(#paint0_linear_4_2)" stroke="#B38B24" stroke-width="2"/>
+<text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="52" letter-spacing="0em"><tspan x="2244" y="2199.91">Morgan Maxwell</tspan></text>
+<line x1="2006.7" y1="2133" x2="2848.49" y2="2133" stroke="#314E85" stroke-width="2"/>
+<text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="64" font-weight="500" letter-spacing="0.02em"><tspan x="2382.06" y="2082.77">ttd</tspan></text>
+<text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="52" letter-spacing="0em"><tspan x="759" y="2199.91">Tanggal</tspan></text>
+<line x1="448.701" y1="2133" x2="1290.49" y2="2133" stroke="#314E85" stroke-width="2"/>
+<text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="64" font-weight="500" letter-spacing="0.02em"><tspan x="597.198" y="2082.77">{tanggal_selesai}</tspan></text>
+<text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="80" letter-spacing="0em"><tspan x="702.305" y="1604.54">Atas keberhasilan menyelesaikan kuis {nama_kuis} </tspan></text>
+<line x1="450" y1="1451" x2="2850" y2="1451" stroke="#314E85" stroke-width="2"/>
+<text fill="#314E85" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="200" font-weight="600" letter-spacing="0em"><tspan x="1262.32" y="1294.73">{NAMA}</tspan></text>
+<text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="64" letter-spacing="0em"><tspan x="1385.09" y="966.773">Diberikan Kepada</tspan></text>
+<text fill="#314E85" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="96" letter-spacing="0.05em"><tspan x="1261.25" y="744.909">PENGHARGAAN</tspan></text>
+<text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="256" font-weight="bold" letter-spacing="0.05em"><tspan x="856.4" y="558.091">SERTIFIKAT</tspan></text>
+<defs>
+<filter id="filter0_d_4_2" x="1412.99" y="1807.45" width="472" height="472" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="4"/>
+<feGaussianBlur stdDeviation="2"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_4_2"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_4_2" result="shape"/>
+</filter>
+<linearGradient id="paint0_linear_4_2" x1="1521.4" y1="1892.57" x2="1793.51" y2="2167.1" gradientUnits="userSpaceOnUse">
+<stop stop-color="#EFC863"/>
+<stop offset="0.520833" stop-color="#FFD772" stop-opacity="0.5"/>
+<stop offset="1" stop-color="#EFC863"/>
+</linearGradient>
+</defs>
+</svg>

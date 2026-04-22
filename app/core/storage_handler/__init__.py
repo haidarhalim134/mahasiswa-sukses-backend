@@ -13,3 +13,4 @@ def get_storage() -> BaseStorage:
 
 class Buckets(Enum):
     AVATAR = "avatar"
+    CERTIFICATE = 'certificate'

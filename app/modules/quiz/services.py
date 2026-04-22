@@ -6,9 +6,11 @@ from uuid import uuid4
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload
-from sqlmodel import func, select
+from sqlmodel import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.modules.certificate.schemas import CertificateSource
+from app.modules.certificate.services import generate_certificate
 from app.modules.quiz.models import Quiz, QuizAttempt, QuizAttemptAnswer, QuizQuestion
 from app.modules.quiz.schemas import (
     GeneratedCertificate,
@@ -39,10 +41,14 @@ async def get_all_quizzes(db: AsyncSession, current_user: User) -> list[QuizOver
             QuizAttempt.quiz_id,
             func.count(QuizAttempt.id).label("completion_count")
         )
+        .join(Quiz, QuizAttempt.quiz_id == Quiz.id)
         .where(
             QuizAttempt.submitted_at.is_(None),
             QuizAttempt.exited_at.is_(None),
-            (QuizAttempt.started_at + func.make_interval(0, 0, 0, 0, 0, Quiz.duration_minutes * 60)) > now
+            (
+                QuizAttempt.started_at +
+                Quiz.duration_minutes * text("INTERVAL '1 minute'")
+            ) > now
         )
         .group_by(QuizAttempt.quiz_id)
         .subquery()
@@ -114,7 +120,7 @@ async def start_quiz(db: AsyncSession, quiz_id: int, current_user: User) -> Quiz
     quiz = await _get_quiz_or_404(db, quiz_id)
 
     # TODO: just reset i think if user rejoined, end date etc
-    active_attempt = await _get_active_attempt(db, quiz_id, current_user.id)
+    active_attempt = await _get_last_attempt(db, quiz_id, current_user.id)
     if active_attempt is None:
         active_attempt = QuizAttempt(
             quiz_id=quiz.id,
@@ -141,7 +147,7 @@ async def start_quiz(db: AsyncSession, quiz_id: int, current_user: User) -> Quiz
 
 
 async def get_quiz_question(db: AsyncSession, quiz_id: int, question_num: int, current_user: User) -> QuestionRead:
-    await _get_active_attempt_or_404(db, quiz_id, current_user.id)
+    await _get_last_attempt_or_404(db, quiz_id, current_user.id)
     quiz = await _get_quiz_or_404(db, quiz_id)
 
     questions = sorted(quiz.questions, key=lambda item: item.order_index)
@@ -152,11 +158,13 @@ async def get_quiz_question(db: AsyncSession, quiz_id: int, question_num: int, c
 
 
 async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission, current_user: User) -> QuizResult:
-    attempt = await _get_active_attempt_or_404(db, quiz_id, current_user.id)
+    attempt = await _get_last_attempt_or_404(db, quiz_id, current_user.id)
     quiz = await _get_quiz_or_404(db, quiz_id)
 
     # give 1 minute buffer
     if datetime.now(timezone.utc) > attempt.started_at + timedelta(minutes=quiz.duration_minutes + 1):
+        print(datetime.now(timezone.utc))
+        print(attempt.started_at)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Quiz attempt closed",
@@ -220,13 +228,14 @@ async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission
 
 
 async def exit_quiz_early(db: AsyncSession, quiz_id: int, current_user: User) -> None:
-    attempt = await _get_active_attempt_or_404(db, quiz_id, current_user.id)
+    attempt = await _get_last_attempt_or_404(db, quiz_id, current_user.id)
     attempt.exited_at = datetime.now(timezone.utc)
     await db.commit()
 
 
-async def generate_certificate(db: AsyncSession, quiz_id: int, current_user: User) -> GeneratedCertificate:
-    attempt = await _get_active_attempt_or_404(db, quiz_id, current_user.id)
+async def generate_quiz_certificate(db: AsyncSession, quiz_id: int, current_user: User) -> GeneratedCertificate:
+    attempt = await _get_last_attempt_or_404(db, quiz_id, current_user.id, active=False)
+    quiz = await _get_quiz_or_404(db, quiz_id)
 
     if attempt.computed_status != QuizStatus.SELESAI or not attempt.passed:
         raise HTTPException(
@@ -237,7 +246,11 @@ async def generate_certificate(db: AsyncSession, quiz_id: int, current_user: Use
     if attempt.certificate_id:
         return GeneratedCertificate(certificate_id=attempt.certificate_id)
 
-    attempt.certificate_id = str(uuid4())
+    attempt.certificate_id = await generate_certificate(db, current_user.id, quiz.title, quiz.category, CertificateSource.QUIZ, quiz_id, "quiz_certificate.svg", {
+        '{NAMA}': current_user.full_name.upper(),
+        '{tanggal_selesai}': _format_date(attempt.submitted_at),
+        '{nama_kuis}': quiz.title
+    })
     await db.commit()
     await db.refresh(attempt)
 
@@ -252,21 +265,30 @@ async def _get_quiz_or_404(db: AsyncSession, quiz_id: int) -> Quiz:
     return quiz
 
 
-async def _get_active_attempt(db: AsyncSession, quiz_id: int, user_id) -> Optional[QuizAttempt]:
+async def _get_last_attempt(db: AsyncSession, quiz_id: int, user_id, active=True) -> Optional[QuizAttempt]:
     now = datetime.now(timezone.utc)
-    attempt_stmt = select(QuizAttempt).where(
+    attempt_stmt = select(QuizAttempt).join(Quiz, QuizAttempt.quiz_id == Quiz.id).where(
         QuizAttempt.quiz_id == quiz_id,
         QuizAttempt.user_id == user_id,
+    ).order_by(QuizAttempt.started_at.desc())
 
-        QuizAttempt.submitted_at.is_(None),
-        QuizAttempt.exited_at.is_(None),
-        (QuizAttempt.started_at + func.make_interval(0, 0, 0, 0, 0, Quiz.duration_minutes * 60)) > now
-    )
+    if active:
+        attempt_stmt = attempt_stmt.where(        
+            QuizAttempt.submitted_at.is_(None),
+            QuizAttempt.exited_at.is_(None),
+            (
+                QuizAttempt.started_at +
+                Quiz.duration_minutes * text("INTERVAL '1 minute'")
+            ) > now
+        )
+
+    from sqlalchemy.dialects import postgresql
+
     return (await db.execute(attempt_stmt)).scalars().first()
 
 
-async def _get_active_attempt_or_404(db: AsyncSession, quiz_id: int, user_id) -> QuizAttempt:
-    attempt = await _get_active_attempt(db, quiz_id, user_id)
+async def _get_last_attempt_or_404(db: AsyncSession, quiz_id: int, user_id, active=True) -> QuizAttempt:
+    attempt = await _get_last_attempt(db, quiz_id, user_id, active)
     if attempt is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz attempt not found")
     return attempt
@@ -282,3 +304,11 @@ def _question_to_read(question: QuizQuestion, current_number: int) -> QuestionRe
         option_c=question.option_c,
         option_d=question.option_d,
     )
+
+# TODO: move in case it is reusable elsewhere
+def _format_date(dt):
+    bulan = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ]
+    return f"{dt.day} {bulan[dt.month - 1]} {dt.year}"

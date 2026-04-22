@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.modules.quiz.schemas import GeneratedCertificate, QuestionRead, QuizOverview, QuizResult, QuizStarting, QuizSubmission
 from app.modules.quiz.services import (
     exit_quiz_early as exit_quiz_early_service,
-    generate_certificate as generate_certificate_service,
+    generate_quiz_certificate as generate_certificate_service,
     get_all_quizzes as get_all_quizzes_service,
     get_quiz_question as get_quiz_question_service,
     start_quiz as start_quiz_service,
@@ -75,5 +75,4 @@ async def generate_certificate(
     current_user: User = Depends(get_current_user),
 ):
     """Endpoint generate sertifikat untuk attempt quiz tertentu, mengembalikan certificate_id"""
-    raise NotImplementedError
     return await generate_certificate_service(db, quiz_id, current_user)
