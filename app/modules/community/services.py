@@ -302,6 +302,13 @@ async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessa
 async def send_message(db, user, room_id, payload) -> ChatMessageRead:
     await _check_study_room_membership(db, user.id, room_id)
 
+    room: StudyRoom = await db.get(StudyRoom, room_id)
+    if not room.is_active:
+        raise HTTPException(
+            status_code=403,
+            detail="Study room is not active"
+        )
+
     msg = ChatMessage(
         room_id=room_id,
         author_id=user.id,
