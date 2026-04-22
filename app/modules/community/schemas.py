@@ -70,13 +70,18 @@ class ChatMessageRead(BaseModel):
     content: str
     created_at: datetime
 
-class StudyRoomRead(BaseModel):
-    id: int
+class StudyRoomBase(BaseModel):
     title: str
     description: str
+    max_participants: int
+
+class StudyRoomCreate(StudyRoomBase):
+    pass
+
+class StudyRoomRead(StudyRoomBase):
+    id: int
     author: PublicUserView
     current_participants: int
-    max_participants: int
     is_joined: bool = False
     is_active: bool = True
     created_at: datetime

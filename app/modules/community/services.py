@@ -17,6 +17,7 @@ from app.modules.community.schemas import (
     CommentRead,
     LikeToggleResponse,
     ChatMessageRead,
+    StudyRoomCreate,
     StudyRoomRead
 )
 from app.users.schemas import PublicUserView
@@ -176,6 +177,19 @@ async def toggle_like(db, user_id, post_id) -> LikeToggleResponse:
 
 
 ## study room
+async def create_room(db: AsyncSession, user_id, payload: StudyRoomCreate) -> StudyRoomRead:
+    room = StudyRoom(
+        author_id=user_id,
+        title=payload.title,
+        description=payload.description,
+        created_at=datetime.utcnow()
+    )
+    db.add(room)
+    await db.commit()
+    await db.refresh(room)
+
+    return await _build_room_response(db, room, user_id)
+
 async def get_room_feed(db: AsyncSession, query: str, user_id: UUID) -> list[StudyRoomRead]:
     query = f"%{query}%"
     stmt = select(StudyRoom).where(

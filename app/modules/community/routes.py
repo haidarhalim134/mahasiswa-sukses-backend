@@ -10,7 +10,7 @@ from app.modules.community.schemas import (
     CommunityStats,
     ForumFeedParams,
     ForumPostCreate, ForumPostRead,
-    LikeToggleResponse, StudyRoomRead
+    LikeToggleResponse, StudyRoomCreate, StudyRoomRead
 )
 from app.users.models import User
 
@@ -45,7 +45,7 @@ async def create_post(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Endpoint untuk membuat post baru"""
+    """Endpoint untuk membuat post baru, menerima tag dalam bentuk comma separated string 'tag1,tag2,tag3' """
     return await services.create_post(db, current_user.id, post)
 
 
@@ -99,8 +99,17 @@ async def get_room_feed(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Endpoint untuk mengambil list study room"""
+    """Endpoint untuk mengambil list study room, menerima query berupa string"""
     return await services.get_room_feed(db, query, current_user.id)
+
+@router.post("/room", response_model=StudyRoomRead, status_code=201)
+async def create_post(
+    room: StudyRoomCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Endpoint untuk membuat room baru"""
+    return await services.create_room(db, current_user.id, room)
 
 @router.post("/rooms/{room_id}/join", response_model=StudyRoomRead)
 async def join_study_room(
