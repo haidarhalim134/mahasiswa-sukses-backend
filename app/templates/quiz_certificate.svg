@@ -14,7 +14,17 @@
 <text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="64" font-weight="500" letter-spacing="0.02em"><tspan x="597.198" y="2082.77">{tanggal_selesai}</tspan></text>
 <text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="80" letter-spacing="0em"><tspan x="702.305" y="1604.54">Atas keberhasilan menyelesaikan kuis {nama_kuis} </tspan></text>
 <line x1="450" y1="1451" x2="2850" y2="1451" stroke="#314E85" stroke-width="2"/>
-<text fill="#314E85" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="200" font-weight="600" letter-spacing="0em"><tspan x="1262.32" y="1294.73">{NAMA}</tspan></text>
+<text 
+  x="1650" 
+  y="1294.73"
+  text-anchor="middle"
+  fill="#314E85"
+  font-family="Inter"
+  font-size="200"
+  font-weight="600"
+  letter-spacing="0em">
+  {NAMA}
+</text>
 <text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="64" letter-spacing="0em"><tspan x="1385.09" y="966.773">Diberikan Kepada</tspan></text>
 <text fill="#314E85" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="96" letter-spacing="0.05em"><tspan x="1261.25" y="744.909">PENGHARGAAN</tspan></text>
 <text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="256" font-weight="bold" letter-spacing="0.05em"><tspan x="856.4" y="558.091">SERTIFIKAT</tspan></text>
