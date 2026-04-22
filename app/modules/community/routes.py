@@ -94,7 +94,7 @@ async def toggle_post_like(
 
 ## study room
 @router.get("/feed/room", response_model=list[StudyRoomRead])
-async def get_forum_feed(
+async def get_room_feed(
     query: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
