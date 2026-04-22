@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from enum import Enum
@@ -34,7 +35,7 @@ class QuestionRead(BaseModel):
     total_questions: int
     text: str
     options: List[QuestionOption]
-    timer_seconds: int
+    end_date_time: datetime
 
 class QuizSubmission(BaseModel):
     answers: dict[int, int] 
