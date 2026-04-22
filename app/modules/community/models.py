@@ -7,6 +7,7 @@ from sqlmodel import Field, Relationship
 from sqlalchemy import Column, String, DateTime, Boolean, Integer
 from sqlmodel import ForeignKey, UUID
 
+from app.modules.community.schemas import ForumCategory
 from app.users.models import User
 
 
@@ -25,6 +26,10 @@ class ForumPost(Base, table=True):
     title: str = Field(sa_column=Column(String, nullable=False))
     content: str = Field(sa_column=Column(String, nullable=False))
 
+    category: ForumCategory = Field(
+        sa_column=Column(String, nullable=False)
+    )
+    
     # simple comma-separated tags
     tags: Optional[str] = Field(default="", sa_column=Column(String))
 

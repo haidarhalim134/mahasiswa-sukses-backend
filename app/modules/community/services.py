@@ -12,6 +12,7 @@ from app.modules.community.models import (
 from app.modules.community.schemas import (
     CommunityStats,
     ForumFeedParams,
+    ForumPostCreate,
     ForumPostRead,
     CommentRead,
     LikeToggleResponse,
@@ -31,12 +32,13 @@ async def get_stats(db: AsyncSession) -> CommunityStats:
 
 
 ## posts
-async def create_post(db: AsyncSession, user_id, payload) -> ForumPostRead:
+async def create_post(db: AsyncSession, user_id, payload: ForumPostCreate) -> ForumPostRead:
     post = ForumPost(
         author_id=user_id,
         title=payload.title,
         content=payload.content,
         tags=",".join(payload.tags),
+        category=payload.category,
         created_at=datetime.utcnow()
     )
     db.add(post)
@@ -62,7 +64,7 @@ async def get_forum_feed(db: AsyncSession, params: ForumFeedParams, user_id: UUI
     stmt = select(ForumPost).order_by(desc(ForumPost.created_at))
 
     if params.tag:
-        stmt = stmt.where(ForumPost.tags.contains(params.tag))
+        stmt = stmt.where(cast(ForumPost.tags, String).contains(params.tag))
 
     stmt = stmt.offset(params.offset).limit(params.limit)
 
@@ -75,7 +77,7 @@ async def get_forum_feed(db: AsyncSession, params: ForumFeedParams, user_id: UUI
     ]
 
 
-async def _build_post_response(db, post, user_id) -> ForumPostRead:
+async def _build_post_response(db, post: ForumPost, user_id) -> ForumPostRead:
     likes_count = await db.scalar(
         select(func.count()).where(PostLike.post_id == post.id)
     )
@@ -96,11 +98,12 @@ async def _build_post_response(db, post, user_id) -> ForumPostRead:
         title=post.title,
         content=post.content,
         tags=post.tags.split(",") if post.tags else [],
+        category=post.category,
         created_at=post.created_at,
         author=user_to_public_view(post.author),
         likes_count=likes_count or 0,
         comments_count=comments_count or 0,
-        is_liked=bool(is_liked)
+        is_liked=bool(is_liked),
     )
 
 

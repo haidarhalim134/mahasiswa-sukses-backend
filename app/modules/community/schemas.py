@@ -8,6 +8,11 @@ class ForumTab(str, Enum):
     POSTINGAN = "postingan"
     RUANG_BELAJAR = "ruang_belajar"
 
+class ForumCategory(str, Enum):
+    UMUM = "umum"
+    TIPS_TRIK = "tips_trik"
+    BANTUAN = "bantuan"
+
 class CommentCreate(BaseModel):
     comment: str = Field(..., min_length=1, max_length=500)
 
@@ -21,6 +26,7 @@ class ForumPostBase(BaseModel):
     title: str
     content: str
     tags: List[str] = []
+    category: ForumCategory
 
     @field_validator("tags")
     def validate_tags_no_comma(cls, tags: List[str]) -> List[str]:
