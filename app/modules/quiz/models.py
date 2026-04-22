@@ -11,6 +11,13 @@ from app.modules.progress_tracking.schemas import TaskCategory, TaskPriority, Ta
 from app.modules.quiz.schemas import QuizDifficulty, QuizOption, QuizStatus
 from app.users.models import User
 
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+import uuid
+
+from sqlmodel import Field, Relationship
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy.sql import func
 
 class Quiz(Base, table=True):
     __tablename__ = "quizzes"
@@ -59,26 +66,47 @@ class QuizQuestion(Base, table=True):
         sa_column=Column(String, nullable=False)
     )
 
+
 class QuizAttempt(Base, table=True):
     __tablename__ = "quiz_attempts"
 
     id: Optional[int] = Field(default=None, primary_key=True)
+
     quiz_id: int = Field(
         sa_column=Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
     )
-    quiz: Quiz = Relationship(
+    quiz: "Quiz" = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[QuizAttempt.quiz_id]"}
     )
 
     user_id: uuid.UUID = Field(
         sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     )
-    user: User = Relationship(sa_relationship_kwargs={"foreign_keys": "[QuizAttempt.user_id]"})
+    user: "User" = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[QuizAttempt.user_id]"}
+    )
 
-    status: QuizStatus = Field(sa_column=Column(String, nullable=False, default=QuizStatus.BERJALAN.value))
-    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now()))
-    submitted_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
-    exited_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    # TODO: might no longer be necessary
+    status: QuizStatus = Field(
+        sa_column=Column(String, nullable=False, default=QuizStatus.BERJALAN.value)
+    )
+
+    started_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False, server_default=func.now()),
+    )
+
+    # should only be filled when user submitted, else None
+    submitted_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), nullable=True),
+    )
+
+    # should only be filled when user exited, else None
+    exited_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), nullable=True),
+    )
 
     correct_answers: int = Field(sa_column=Column(Integer, nullable=False, default=0))
     total_questions: int = Field(sa_column=Column(Integer, nullable=False, default=0))
@@ -87,7 +115,10 @@ class QuizAttempt(Base, table=True):
     points_gained: int = Field(sa_column=Column(Integer, nullable=False, default=0))
     streak_bonus: int = Field(sa_column=Column(Integer, nullable=False, default=0))
 
-    certificate_id: Optional[str] = Field(default=None, sa_column=Column(String, nullable=True, index=True))
+    certificate_id: Optional[str] = Field(
+        default=None,
+        sa_column=Column(String, nullable=True, index=True),
+    )
 
     answers: list["QuizAttemptAnswer"] = Relationship(
         back_populates="attempt",
@@ -95,6 +126,30 @@ class QuizAttempt(Base, table=True):
             "primaryjoin": "QuizAttempt.id == QuizAttemptAnswer.attempt_id",
         },
     )
+
+    @property
+    def end_time(self) -> datetime:
+        return self.started_at + timedelta(minutes=self.quiz.duration_minutes)
+
+    @property
+    def is_expired(self) -> bool:
+        return datetime.now(timezone.utc) > self.end_time
+
+    @property
+    def computed_status(self) -> QuizStatus:
+        """
+        Dynamic status without relying on scheduler
+        """
+        if self.exited_at:
+            return QuizStatus.BATAL
+
+        if self.submitted_at:
+            return QuizStatus.SELESAI
+
+        if self.is_expired:
+            return QuizStatus.SELESAI
+
+        return QuizStatus.BERJALAN
 
 
 class QuizAttemptAnswer(Base, table=True):
