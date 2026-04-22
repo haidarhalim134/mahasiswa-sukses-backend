@@ -1,12 +1,13 @@
+import asyncio
 from datetime import datetime
 from uuid import UUID
 from fastapi import HTTPException
-from sqlmodel import select, func, desc
+from sqlmodel import String, cast, or_, select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.community.models import (
     ForumPost, Comment, PostLike,
-    StudyRoom, StudyRoomParticipant, ChatMessage
+    StudyRoom, StudyRoomLike, StudyRoomParticipant, ChatMessage
 )
 from app.modules.community.schemas import (
     CommunityStats,
@@ -172,6 +173,51 @@ async def toggle_like(db, user_id, post_id) -> LikeToggleResponse:
 
 
 ## study room
+async def get_room_feed(db: AsyncSession, query: str, user_id: UUID) -> list[StudyRoomRead]:
+    query = f"%{query}%"
+    stmt = select(StudyRoom).where(
+        or_(
+            cast(StudyRoom.title, String).ilike(query),
+            cast(StudyRoom.description, String).ilike(query),
+        )
+    )
+
+    result = await db.execute(stmt)
+    rooms = result.scalars().all()
+
+    return await asyncio.gather(
+        *[_build_room_response(db, room, user_id) for room in rooms]
+    )
+
+async def _build_room_response(db, room: StudyRoom, user_id) -> StudyRoomRead:
+    likes_count = await db.scalar(
+        select(func.count()).where(StudyRoomLike.room_id == room.id)
+    )
+
+    is_liked = await db.scalar(
+        select(func.count()).where(
+            StudyRoomLike.room_id == room.id,
+            StudyRoomLike.user_id == user_id
+        )
+    )
+
+    # TODO: doing this query twice for the join room function, possible optimization
+    current_participant_count = await db.scalar(
+        select(func.count()).where(StudyRoomParticipant.room_id == room.id)
+    )
+
+    return StudyRoomRead(
+        id=room.id,
+        title=room.title,
+        description=room.description,
+        created_at=room.created_at,
+        author=user_to_public_view(room.author),
+        likes_count=likes_count or 0,
+        is_liked=bool(is_liked),
+        current_participants=current_participant_count,
+        max_participants=room.max_participants
+    )
+
 async def join_room(db, user_id, room_id) -> StudyRoomRead:
     room: StudyRoom = await db.get(StudyRoom, room_id)
 
@@ -192,14 +238,7 @@ async def join_room(db, user_id, room_id) -> StudyRoomRead:
     db.add(participant)
     await db.commit()
 
-    author = user_to_public_view(room.author)
-
-    return StudyRoomRead(
-        **room.model_dump(),
-        author=author,
-        is_joined=True,
-        current_participants=current_participant_count + 1
-    )
+    return await _build_room_response(db, room, user_id)
 
 
 async def leave_room(db, user_id, room_id):

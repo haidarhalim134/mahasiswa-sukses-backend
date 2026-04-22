@@ -74,3 +74,5 @@ class StudyRoomRead(BaseModel):
     is_joined: bool = False
     is_active: bool = True
     created_at: datetime
+    likes_count: int
+    is_liked: bool = False 

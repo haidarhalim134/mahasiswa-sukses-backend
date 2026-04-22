@@ -93,6 +93,15 @@ async def toggle_post_like(
 
 
 ## study room
+@router.get("/feed/room", response_model=list[StudyRoomRead])
+async def get_forum_feed(
+    query: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Endpoint untuk mengambil list study room"""
+    return await services.get_room_feed(db, query, current_user.id)
+
 @router.post("/rooms/{room_id}/join", response_model=StudyRoomRead)
 async def join_study_room(
     room_id: int,
