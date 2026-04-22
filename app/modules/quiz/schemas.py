@@ -30,6 +30,7 @@ class QuizOverview(BaseModel):
     minimum_score: int
     xp_reward: int
     difficulty: QuizDifficulty
+    last_attempt_successfull: bool = False # if true but no certificate id, must call generate first
     certificate_id: Optional[str] = None
     completion_count: int
 
