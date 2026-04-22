@@ -182,6 +182,7 @@ async def create_room(db: AsyncSession, user_id, payload: StudyRoomCreate) -> St
         author_id=user_id,
         title=payload.title,
         description=payload.description,
+        max_participants=payload.max_participants,
         created_at=datetime.utcnow()
     )
     db.add(room)
