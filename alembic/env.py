@@ -29,6 +29,7 @@ import app.users.models
 import app.modules.gamification.models
 import app.modules.progress_tracking.models
 import app.modules.community.models
+import app.modules.quiz.models
 
 target_metadata = Base.metadata
 
