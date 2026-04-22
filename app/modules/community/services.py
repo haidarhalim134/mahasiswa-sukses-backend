@@ -257,7 +257,7 @@ async def leave_room(db, user_id, room_id):
 
 ## chat
 async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessageRead]:
-    _check_study_room_membership(db, user_id, room_id)
+    await _check_study_room_membership(db, user_id, room_id)
 
     stmt = select(ChatMessage).where(ChatMessage.room_id == room_id)
 
@@ -282,7 +282,7 @@ async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessa
 
 
 async def send_message(db, user, room_id, payload) -> ChatMessageRead:
-    _check_study_room_membership(db, user.id, room_id)
+    await _check_study_room_membership(db, user.id, room_id)
 
     msg = ChatMessage(
         room_id=room_id,
