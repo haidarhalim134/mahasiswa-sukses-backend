@@ -45,7 +45,7 @@ async def submit_quiz(
     submission: QuizSubmission,
     current_user: User = Depends(get_current_user),
 ):
-    """Endpoint untuk mengirim quiz selesai, answer dikirim dalam bentuk dictionary dengan key adalah nomor pertanyaan dan value adalah pilihan jawaban (a, b, c, atau d)"""
+    """Endpoint untuk mengirim quiz selesai, answer dikirim dalam bentuk dictionary dengan key adalah id pertanyaan dan value adalah pilihan jawaban (a, b, c, atau d)"""
     raise NotImplementedError
 
 
@@ -57,7 +57,7 @@ async def exit_quiz_early(
     """Endpoint untuk membatalkan quiz"""
     raise NotImplementedError
 
-@router.post("/{attempt_id}/certificate", response_model=GeneratedCertificate)
+@router.post("/{quiz_id}/certificate", response_model=GeneratedCertificate)
 async def generate_certificate(
     quiz_id: int,
     db: AsyncSession = Depends(get_db),
