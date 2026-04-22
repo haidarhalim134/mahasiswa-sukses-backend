@@ -26,6 +26,7 @@ class Certificate(Base, table=True):
     source: CertificateSource = Field(
         sa_column=Column(String, nullable=False)
     )
+    source_id: int = Field(nullable=False)
 
     title: str = Field(nullable=False)
     category: str = Field(nullable=False)
