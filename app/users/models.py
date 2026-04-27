@@ -68,6 +68,14 @@ class User(Base, table=True):
         )
     )
 
+    last_seen_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=True
+        )
+    )
+
     last_login_at: Optional[datetime] = Field(
         default=None,
         sa_column=Column(

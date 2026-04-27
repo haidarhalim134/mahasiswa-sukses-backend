@@ -1,7 +1,10 @@
-from uuid import UUID
-from datetime import date
+from typing import Any
 
-from sqlmodel import select
+
+from uuid import UUID
+from datetime import date, datetime, timedelta, timezone
+
+from sqlmodel import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.users.models import User
@@ -48,3 +51,29 @@ def user_to_public_view(user: User):
         id=user.id,
         full_name=user.full_name
     )
+
+async def update_last_seen(
+    db: AsyncSession,
+    user_id,
+) -> None:
+    await db.execute(
+        update(User)
+        .where(User.id == user_id)
+        .values(last_seen_at=datetime.now(timezone.utc))
+    )
+    await db.commit()
+
+async def get_online_users_count(
+    db: AsyncSession,
+    window_minutes: int = 10,
+) -> int:
+    threshold = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
+
+    result = await db.scalar(
+        select(func.count()).where(
+            User.last_seen_at != None,
+            User.last_seen_at > threshold
+        )
+    )
+
+    return result or 0

@@ -21,7 +21,7 @@ from app.modules.community.schemas import (
     StudyRoomRead
 )
 from app.users.schemas import PublicUserView
-from app.users.service import get_user_by_id, user_to_public_view
+from app.users.service import get_online_users_count, get_user_by_id, user_to_public_view
 
 
 ## stats
@@ -33,7 +33,7 @@ async def get_stats(db: AsyncSession) -> CommunityStats:
     )
 
     return CommunityStats(
-        online_count=0,
+        online_count=await get_online_users_count(db),
         active_rooms_count=active_rooms_count or 0
     )
 

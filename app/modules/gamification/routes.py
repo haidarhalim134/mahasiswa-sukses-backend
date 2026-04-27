@@ -16,6 +16,7 @@ from app.modules.gamification.schemas import (
     QuestFrequency,
     QuestItem,
 )
+from app.users.service import update_last_seen
 
 router = APIRouter(prefix="/api/v1/gamification", tags=["gamification"])
 
@@ -95,21 +96,27 @@ async def get_history(
 
 @router.post("/heartbeat")
 async def heartbeat(
-    user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Endpoint untuk progress quest stay di aplikasi, panggil setiap 10 menit
+    Endpoint untuk progress quest stay di aplikasi dan membantu aplikasi membuat estimasi jumlah user online, panggil setiap 10 menit
     """
 
     await progress_quest(
         db=db,
-        user=user,
+        user=current_user,
         event=QuestEvent.STAY_1_HOUR
     )
 
     await progress_quest(
         db=db,
-        user=user,
+        user=current_user,
         event=QuestEvent.STAY_10_MIN
+    )
+
+    # since this is here might be wiser to move the hearbeat to its own analytics module since its not just about quest anymore
+    await update_last_seen(
+        db=db,
+        user_id=current_user.id
     )
