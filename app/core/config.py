@@ -12,5 +12,7 @@ class Settings(BaseSettings):
     task_token: str
     qstash_token: str | None = None
 
+    cloudconvert_api_key: str
+
 
 settings = Settings()

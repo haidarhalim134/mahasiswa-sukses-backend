@@ -5,40 +5,83 @@ from httpx import HTTPError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
+from app.core.config import settings
 from app.core.storage_handler import Buckets, get_storage
 from app.modules.certificate.models import Certificate
 from app.modules.certificate.schemas import CertificateItem, CertificateSource
+import httpx
+import asyncio
 # import cairosvg
 
 async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, category: str, source: CertificateSource, source_id: int, template_name: str, replaces: dict):
-    raise NotImplementedError
-#     with open(f"app/templates/{template_name}", "r", encoding="utf-8") as f:
-#         svg = f.read()
+    with open(f"app/templates/{template_name}", "r", encoding="utf-8") as f:
+        svg = f.read()
 
-#     for key, val in replaces.items():
-#         svg = svg.replace(key, val)
+    for key, val in replaces.items():
+        svg = svg.replace(key, val)
 
-#     file = cairosvg.svg2pdf(bytestring=svg.encode("utf-8"))
-#     file = BytesIO(file)
+    # TODO: move to hybrid vps and vercel deployment handler as well maybe?
+    async with httpx.AsyncClient() as client:
+            headers = {"Authorization": f"Bearer {settings.cloudconvert_api_key}"}
+            
+            payload = {
+                "tasks": {
+                    "import-svg": {
+                        "operation": "import/raw",
+                        "file": svg,
+                        "filename": "certificate.svg"
+                    },
+                    "convert-to-pdf": {
+                        "operation": "convert",
+                        "input": "import-svg",
+                        "output_format": "pdf"
+                    },
+                    "export-pdf": {
+                        "operation": "export/url",
+                        "input": "convert-to-pdf"
+                    }
+                }
+            }
 
-#     storage = get_storage()
+            job_res = await client.post("https://api.cloudconvert.com/v2/jobs", json=payload, headers=headers)
+            job_res.raise_for_status()
+            job_data = job_res.json()["data"]
+            job_id = job_data["id"]
 
-#     id: str = str(uuid4())
-#     path = f"{id}.pdf"
-#     await storage.upload(file, Buckets.CERTIFICATE.value, path)
+            pdf_url = None
+            while not pdf_url:
+                await asyncio.sleep(1) # Wait 1 second between checks
+                status_res = await client.get(f"https://api.cloudconvert.com/v2/jobs/{job_id}", headers=headers)
+                status_data = status_res.json()["data"]
 
-#     certificate = Certificate(
-#         id=id,
-#         user_id=awardee_id,
-#         source=source,
-#         source_id=source_id,
-#         title=title,
-#         category=category
-#     )
-#     db.add(certificate)
-#     await db.commit()
+                if status_data["status"] == "finished":
+                    export_task = next(t for t in status_data["tasks"] if t["name"] == "export-pdf")
+                    pdf_url = export_task["result"]["files"][0]["url"]
+                elif status_data["status"] == "error":
+                    raise Exception(f"CloudConvert Job Failed: {status_data}")
 
-#     return id
+            download_res = await client.get(pdf_url)
+            download_res.raise_for_status()
+            file = BytesIO(download_res.content)
+
+    storage = get_storage()
+
+    id: str = str(uuid4())
+    path = f"{id}.pdf"
+    await storage.upload(file, Buckets.CERTIFICATE.value, path)
+
+    certificate = Certificate(
+        id=id,
+        user_id=awardee_id,
+        source=source,
+        source_id=source_id,
+        title=title,
+        category=category
+    )
+    db.add(certificate)
+    await db.commit()
+
+    return id
 
 
 async def get_user_certificate(db: AsyncSession, user_id: UUID):
