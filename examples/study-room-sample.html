@@ -61,6 +61,7 @@
       };
     }
 
+    let typingUsers = new Map()
     async function joinRoom() {
       const roomId = document.getElementById("roomId").value;
       const name = document.getElementById("userName").value;
@@ -106,15 +107,24 @@
       });
 
       // Listen for Typing Broadcasts
+      
       channel.on('broadcast', { event: 'typing' }, payload => {
-        console.log(payload)
-        const typingEl = document.getElementById("typing");
-        typingEl.innerText = `${payload.payload.name} is typing...`;
-        
-        // Clear indicator after 2 seconds of no broadcast
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-            typingEl.innerText = "-";
+        const { name } = payload.payload;
+
+        // mark user as typing
+        typingUsers.set(name, Date.now());
+
+        updateTypingUI();
+
+        // set individual timeout per user
+        setTimeout(() => {
+          const last = typingUsers.get(name);
+
+          // only remove if no newer typing event
+          if (Date.now() - last >= 2000) {
+            typingUsers.delete(name);
+            updateTypingUI();
+          }
         }, 2000);
       });
 
@@ -128,16 +138,33 @@
       loadHistory(roomId);
     }
 
+    function updateTypingUI() {
+      const typingEl = document.getElementById("typing");
+
+      const names = Array.from(typingUsers.keys());
+
+      if (names.length === 0) {
+        typingEl.innerText = "-";
+      } else if (names.length === 1) {
+        typingEl.innerText = `${names[0]} is typing...`;
+      } else {
+        typingEl.innerText = `${names.join(", ")} are typing...`;
+      }
+    }
+
     // Call this on textarea input
+    let lastSent = 0;
     function sendTypingBroadcast() {
-        if (channel) {
-            channel.send({
-                type: 'broadcast',
-                event: 'typing',
-                // bisa pake user id juga di sini tapi harus bikin endpoint lagi untuk 
-                payload: { name: document.getElementById("userName").value }
-            });
-        }
+      const now = Date.now();
+      if (channel && now - lastSent > 500) {
+          channel.send({
+              type: 'broadcast',
+              event: 'typing',
+              // or user id with new endpoint to fetch username based on id
+              payload: { name: document.getElementById("userName").value }
+          });
+          lastSent = now;
+      }
     }
 
     async function sendMessage() {
