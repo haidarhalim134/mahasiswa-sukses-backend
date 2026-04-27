@@ -269,14 +269,19 @@ async def _build_room_response(db, room: StudyRoom, user_id) -> StudyRoomRead:
         max_participants=room.max_participants
     )
 
-async def join_room(db, user_id, room_id) -> StudyRoomRead:
-    room: StudyRoom = await db.get(StudyRoom, room_id)
+async def join_room(db: AsyncSession, user_id, room_id) -> StudyRoomRead:
+    room = await db.get(StudyRoom, room_id)
+    if not room:
+        raise HTTPException(
+            status_code=404,
+            detail="Study room not found"
+        )
 
     # TODO: handle potential race condition
     current_participant_count = await db.scalar(
         select(func.count()).where(StudyRoomParticipant.room_id == room_id)
     )
-    if current_participant_count >= room.max_participants:
+    if current_participant_count and current_participant_count >= room.max_participants:
         raise HTTPException(
             status_code=403,
             detail="Room is full"
