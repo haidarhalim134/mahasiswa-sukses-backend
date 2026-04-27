@@ -15,4 +15,4 @@ sqlmodel
 APScheduler
 qstash
 pillow
-CairoSVG
+# CairoSVG

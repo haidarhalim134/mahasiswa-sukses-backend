@@ -1,6 +1,5 @@
 from io import BytesIO
 from uuid import UUID, uuid4
-import cairosvg
 from fastapi import HTTPException
 from httpx import HTTPError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,35 +8,37 @@ from sqlmodel import select
 from app.core.storage_handler import Buckets, get_storage
 from app.modules.certificate.models import Certificate
 from app.modules.certificate.schemas import CertificateItem, CertificateSource
+# import cairosvg
 
 async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, category: str, source: CertificateSource, source_id: int, template_name: str, replaces: dict):
-    with open(f"app/templates/{template_name}", "r", encoding="utf-8") as f:
-        svg = f.read()
+    raise NotImplementedError
+#     with open(f"app/templates/{template_name}", "r", encoding="utf-8") as f:
+#         svg = f.read()
 
-    for key, val in replaces.items():
-        svg = svg.replace(key, val)
+#     for key, val in replaces.items():
+#         svg = svg.replace(key, val)
 
-    file = cairosvg.svg2pdf(bytestring=svg.encode("utf-8"))
-    file = BytesIO(file)
+#     file = cairosvg.svg2pdf(bytestring=svg.encode("utf-8"))
+#     file = BytesIO(file)
 
-    storage = get_storage()
+#     storage = get_storage()
 
-    id: str = str(uuid4())
-    path = f"{id}.pdf"
-    await storage.upload(file, Buckets.CERTIFICATE.value, path)
+#     id: str = str(uuid4())
+#     path = f"{id}.pdf"
+#     await storage.upload(file, Buckets.CERTIFICATE.value, path)
 
-    certificate = Certificate(
-        id=id,
-        user_id=awardee_id,
-        source=source,
-        source_id=source_id,
-        title=title,
-        category=category
-    )
-    db.add(certificate)
-    await db.commit()
+#     certificate = Certificate(
+#         id=id,
+#         user_id=awardee_id,
+#         source=source,
+#         source_id=source_id,
+#         title=title,
+#         category=category
+#     )
+#     db.add(certificate)
+#     await db.commit()
 
-    return id
+#     return id
 
 
 async def get_user_certificate(db: AsyncSession, user_id: UUID):
