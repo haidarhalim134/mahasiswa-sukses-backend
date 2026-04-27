@@ -243,8 +243,8 @@ async def generate_quiz_certificate(db: AsyncSession, quiz_id: int, current_user
             detail="Attempt did not pass",
         )
 
-    if attempt.certificate_id:
-        return GeneratedCertificate(certificate_id=attempt.certificate_id)
+    # if attempt.certificate_id:
+    #     return GeneratedCertificate(certificate_id=attempt.certificate_id)
 
     attempt.certificate_id = await generate_certificate(db, current_user.id, quiz.title, quiz.category, CertificateSource.QUIZ, quiz_id, "quiz_certificate.svg", {
         '{NAMA}': current_user.full_name.upper(),

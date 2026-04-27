@@ -15,4 +15,5 @@ sqlmodel
 APScheduler
 qstash
 pillow
+playwright
 # CairoSVG

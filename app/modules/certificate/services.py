@@ -8,37 +8,74 @@ from sqlmodel import select
 from app.core.storage_handler import Buckets, get_storage
 from app.modules.certificate.models import Certificate
 from app.modules.certificate.schemas import CertificateItem, CertificateSource
-# import cairosvg
+from playwright.async_api import async_playwright
+from io import BytesIO
 
-async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, category: str, source: CertificateSource, source_id: int, template_name: str, replaces: dict):
-    raise NotImplementedError
-#     with open(f"app/templates/{template_name}", "r", encoding="utf-8") as f:
-#         svg = f.read()
-
-#     for key, val in replaces.items():
-#         svg = svg.replace(key, val)
-
-#     file = cairosvg.svg2pdf(bytestring=svg.encode("utf-8"))
-#     file = BytesIO(file)
-
-#     storage = get_storage()
-
-#     id: str = str(uuid4())
-#     path = f"{id}.pdf"
-#     await storage.upload(file, Buckets.CERTIFICATE.value, path)
-
-#     certificate = Certificate(
-#         id=id,
-#         user_id=awardee_id,
-#         source=source,
-#         source_id=source_id,
-#         title=title,
-#         category=category
-#     )
-#     db.add(certificate)
-#     await db.commit()
-
-#     return id
+async def generate_certificate(
+    db: AsyncSession, 
+    awardee_id: UUID, 
+    title: str, 
+    category: str, 
+    source: CertificateSource, 
+    source_id: int, 
+    template_name: str, 
+    replaces: dict
+):
+    with open(f"app/templates/{template_name}", "r", encoding="utf-8") as f:
+        svg = f.read()
+    
+    for key, val in replaces.items():
+        svg = svg.replace(key, val)
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{ margin: 0; padding: 0; }}
+            svg {{ display: block; width: 100%; height: 100%; }}
+        </style>
+    </head>
+    <body>
+        {svg}
+    </body>
+    </html>
+    """
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page()
+        await page.set_content(html_content)
+        
+        # Generate PDF
+        pdf_bytes = await page.pdf(
+            format='A4',  # or custom dimensions
+            print_background=True,
+            margin={'top': '0', 'right': '0', 'bottom': '0', 'left': '0'}
+        )
+        
+        await browser.close()
+    
+    file = BytesIO(pdf_bytes)
+    
+    storage = get_storage()
+    id: str = str(uuid4())
+    path = f"{id}.pdf"
+    await storage.upload(file, Buckets.CERTIFICATE.value, path)
+    
+    certificate = Certificate(
+        id=id,
+        user_id=awardee_id,
+        source=source,
+        source_id=source_id,
+        title=title,
+        category=category
+    )
+    db.add(certificate)
+    await db.commit()
+    
+    return id
 
 
 async def get_user_certificate(db: AsyncSession, user_id: UUID):
