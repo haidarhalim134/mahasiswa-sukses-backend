@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Community API Tester</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; line-height: 1.6; max-width: 800px; margin: auto; }
+    input, textarea, button { margin: 5px 0; width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+    button { background-color: #3ecf8e; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background-color: #34b27b; }
+    section { border: 1px solid #eee; padding: 20px; margin-bottom: 20px; border-radius: 12px; background: #fafafa; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; overflow-x: auto; border-radius: 8px; font-size: 13px; max-height: 400px; }
+    .status-group { display: flex; gap: 20px; font-size: 0.9em; color: #666; }
+    .typing-text { color: #3ecf8e; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1>Community API Tester</h1>
+
+  <section>
+    <h3>1. Config</h3>
+    <input id="userName" placeholder="Your Name (e.g. Alex)" value="User_1"/>
+    <input id="token" placeholder="Access Token" value=""/>
+    <input id="supabaseUrl" placeholder="Supabase URL" value="https://sxjbsufglwxkpkhshvyi.supabase.co"/>
+    <input id="supabaseKey" placeholder="Supabase Anon Key" value="sb_publishable_dRXmXXP7AsaQn7V5vviYmQ_4f9fEyQx"/>
+  </section>
+
+  <section>
+    <h3>2. Study Room</h3>
+    <input id="roomId" placeholder="Room ID (UUID)" />
+    <div style="display: flex; gap: 10px;">
+        <button onclick="joinRoom()">Join Room</button>
+        <button onclick="leaveRoom()" style="background: #ff4d4d;">Leave Room</button>
+    </div>
+    <div class="status-group">
+        <p><b>Participants:</b> <span id="presence">0</span></p>
+        <p><b>Status:</b> <span id="typing" class="typing-text">-</span></p>
+    </div>
+  </section>
+
+  <section>
+    <h3>3. Chat</h3>
+    <textarea id="chatMessage" placeholder="Type a message..." oninput="sendTypingBroadcast()"></textarea>
+    <button onclick="sendMessage()">Send Message</button>
+  </section>
+
+  <h3>Message Feed</h3>
+  <pre id="messages">[]</pre>
+
+  <script>
+    const BASE = "https://mahasiswa-sukses-backend.vercel.app/api/v1/community";
+    let supabaseClient = null;
+    let channel = null;
+    let typingTimeout = null;
+
+    function headers() {
+      return {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + document.getElementById("token").value
+      };
+    }
+
+    async function joinRoom() {
+      const roomId = document.getElementById("roomId").value;
+      const name = document.getElementById("userName").value;
+      
+      if(!roomId) return alert("Please enter a Room ID");
+
+      // 1. Notify Backend
+      await fetch(`${BASE}/rooms/${roomId}/join`, {
+        method: "POST",
+        headers: headers()
+      });
+
+      const url = document.getElementById("supabaseUrl").value;
+      const key = document.getElementById("supabaseKey").value;
+
+      // 2. Init Supabase
+      supabaseClient = window.supabase.createClient(url, key, {
+        global: { headers: { Authorization: "Bearer " + document.getElementById("token").value } }
+      });
+
+      channel = supabaseClient.channel(`study_room:${roomId}`, {
+        config: { 
+          presence: { key: name }, 
+        }
+      });
+
+      // Listen for Database Changes (Messages)
+      channel.on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'study_room_messages',
+          filter: `room_id=eq.${roomId}`
+        },
+        payload => {
+          appendMessage(payload.new)
+        }
+      );
+
+      // Listen for Presence (Who is online)
+      channel.on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        document.getElementById("presence").innerText = Object.keys(state).length;
+      });
+
+      // Listen for Typing Broadcasts
+      channel.on('broadcast', { event: 'typing' }, payload => {
+        console.log(payload)
+        const typingEl = document.getElementById("typing");
+        typingEl.innerText = `${payload.payload.name} is typing...`;
+        
+        // Clear indicator after 2 seconds of no broadcast
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            typingEl.innerText = "-";
+        }, 2000);
+      });
+
+      await channel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          // Track presence with user name
+          await channel.track({ name: name, online_at: new Date().toISOString() });
+        }
+      });
+
+      loadHistory(roomId);
+    }
+
+    // Call this on textarea input
+    function sendTypingBroadcast() {
+        if (channel) {
+            channel.send({
+                type: 'broadcast',
+                event: 'typing',
+                // bisa pake user id juga di sini tapi harus bikin endpoint lagi untuk 
+                payload: { name: document.getElementById("userName").value }
+            });
+        }
+    }
+
+    async function sendMessage() {
+      const roomId = document.getElementById("roomId").value;
+      const content = document.getElementById("chatMessage").value;
+      if(!content) return;
+
+      await fetch(`${BASE}/rooms/${roomId}/messages`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ content })
+      });
+
+      document.getElementById("chatMessage").value = "";
+    }
+
+    async function loadHistory(roomId) {
+      try {
+        const res = await fetch(`${BASE}/rooms/${roomId}/messages`, { headers: headers() });
+        const data = await res.json();
+        document.getElementById("messages").innerText = JSON.stringify(data, null, 2);
+      } catch (e) {
+        console.error("Failed to load history", e);
+      }
+    }
+
+    function appendMessage(msg) {
+      const el = document.getElementById("messages");
+      try {
+        const current = JSON.parse(el.innerText);
+        const updated = Array.isArray(current) ? [msg, ...current] : [msg];
+        el.innerText = JSON.stringify(updated, null, 2);
+      } catch (e) {
+        el.innerText = JSON.stringify([msg], null, 2);
+      }
+    }
+
+    async function leaveRoom() {
+      const roomId = document.getElementById("roomId").value;
+      await fetch(`${BASE}/rooms/${roomId}/leave`, { method: "DELETE", headers: headers() });
+      if (channel) {
+        supabaseClient.removeChannel(channel);
+        channel = null;
+        document.getElementById("presence").innerText = "0";
+        document.getElementById("typing").innerText = "-";
+      }
+    }
+  </script>
+</body>
+</html>

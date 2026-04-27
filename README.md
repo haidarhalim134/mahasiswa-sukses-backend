@@ -38,6 +38,12 @@ A FastAPI-based backend application for the Mahasiswa Sukses project, using SQLA
    uvicorn app.main:app --reload
    ```
 
+   or 
+   
+   ```
+   gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000
+   ```
+
 3. The API will be available at `http://localhost:8000`
 
 4. Access the interactive API documentation at `http://localhost:8000/docs`
