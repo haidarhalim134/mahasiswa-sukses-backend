@@ -12,6 +12,16 @@ from app.users.models import User
 
 router = APIRouter(prefix="/api/v1/certificate", tags=["certificate"])
 
+@router.get("/list", response_model=list[CertificateItem])
+async def list_earned_certificate(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+    ):
+    """
+    Endpoint untuk melihat list sertifikat yang bisa diunduh user terlogin
+    """
+    return await get_user_certificate(db, current_user.id)
+
 @router.get(
     "/{certificate_id}", 
     responses={
@@ -32,13 +42,3 @@ async def download_certificate(
     """
     file = await download(db, current_user.id, certificate_id)
     return Response(content=file)
-
-@router.get("/list", response_model=list[CertificateItem])
-async def list_earned_certificate(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-    ):
-    """
-    Endpoint untuk melihat list sertifikat yang bisa diunduh user terlogin
-    """
-    return await get_user_certificate(db, current_user.id)
