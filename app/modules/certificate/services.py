@@ -10,6 +10,15 @@ from app.modules.certificate.models import Certificate
 from app.modules.certificate.schemas import CertificateItem, CertificateSource
 from playwright.async_api import async_playwright
 from io import BytesIO
+import os
+import subprocess
+
+def ensure_browser_installed():
+    cache_path = "/tmp/playwright"
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = cache_path
+
+    if not os.path.exists(cache_path):
+        subprocess.run(["playwright", "install", "chromium"], check=True)
 
 async def generate_certificate(
     db: AsyncSession, 

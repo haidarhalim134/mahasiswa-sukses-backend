@@ -16,4 +16,5 @@ APScheduler
 qstash
 pillow
 playwright
+greenlet
 # CairoSVG
