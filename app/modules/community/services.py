@@ -26,9 +26,15 @@ from app.users.service import get_user_by_id, user_to_public_view
 
 ## stats
 async def get_stats(db: AsyncSession) -> CommunityStats:
+    active_rooms_count = await db.scalar(
+        select(func.count()).where(
+            StudyRoom.is_active == True
+        )
+    )
+
     return CommunityStats(
         online_count=0,
-        active_rooms_count=0
+        active_rooms_count=active_rooms_count or 0
     )
 
 
