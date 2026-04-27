@@ -86,7 +86,10 @@ class StudyRoom(Base, table=True):
         sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     )
     author: User = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "[StudyRoom.author_id]"}
+        sa_relationship_kwargs={
+            "foreign_keys": "[StudyRoom.author_id]",
+            "lazy": "selectin"
+        }
     )
 
     max_participants: int = Field(
