@@ -46,15 +46,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def get_cors_headers(request: Request) :
+    origin = request.headers.get("origin")
+
+    # if origin in origins:
+    return {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true",
+    }
+    # return {}
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    headers = get_cors_headers(request)
     response = {"error": "Internal Server Error"}
 
     # handle http exception normally
     if isinstance(exc, HTTPException):
         return JSONResponse(
             status_code=exc.status_code,
-            content={"detail": exc.detail}
+            content={"detail": exc.detail},
+            headers=headers
         )
 
     if isinstance(exc, AuthInvalidJwtError):
@@ -63,7 +75,8 @@ async def global_exception_handler(request: Request, exc: Exception):
             content={
                 "error": exc.__class__.__name__, 
                 "detail": str(exc)
-            }
+            },
+            headers=headers
         )
 
     if settings.show_error_details:
@@ -71,7 +84,11 @@ async def global_exception_handler(request: Request, exc: Exception):
         response["detail"] = str(exc)
         response["traceback"] = traceback.format_exc()
 
-    return JSONResponse(status_code=500, content=response)
+    return JSONResponse(
+        status_code=500, 
+        content=response,
+        headers=headers
+    )
 
 
 app.include_router(auth.router)
