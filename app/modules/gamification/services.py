@@ -81,7 +81,7 @@ async def progress_quest(
                 frequency=qdef["frequency"],
             )
             db.add(quest)
-
+            
         if quest.is_completed:
             continue
 
@@ -99,8 +99,9 @@ async def progress_quest(
             # soft anticheat, need to wait 9 min before progressing
             if minutes <= cooldown:
                 continue
-
-        if not cooldown or quest.last_progress_at:
+        
+        # after first call, last_progress_at is set so the next call that go through can make progress
+        if (not cooldown or quest.last_progress_at) and not quest.is_completed:
             quest.progress += amount
 
         quest.last_progress_at = now
