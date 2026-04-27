@@ -18,7 +18,7 @@ def ensure_browser_installed():
     os.environ["PLAYWRIGHT_BROWSERS_PATH"] = cache_path
 
     if not os.path.exists(cache_path):
-        subprocess.run(["playwright", "install", "chromium"], check=True)
+        subprocess.run(["python", "-m", "playwright", "install", "chromium"], check=True)
 
 async def generate_certificate(
     db: AsyncSession, 
@@ -31,7 +31,7 @@ async def generate_certificate(
     replaces: dict
 ):
     ensure_browser_installed()
-    
+
     with open(f"app/templates/{template_name}", "r", encoding="utf-8") as f:
         svg = f.read()
     
