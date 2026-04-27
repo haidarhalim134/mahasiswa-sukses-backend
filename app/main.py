@@ -49,12 +49,12 @@ app.add_middleware(
 def get_cors_headers(request: Request) :
     origin = request.headers.get("origin")
 
-    # if origin in origins:
-    return {
-        "Access-Control-Allow-Origin": origin,
-        "Access-Control-Allow-Credentials": "true",
-    }
-    # return {}
+    if origin in origins or origin:
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+        }
+    return {}
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
