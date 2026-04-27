@@ -150,6 +150,8 @@ async def join_study_room(
 
     5. Auth:
        Gunakan Access Token (JWT) yang didapat saat login untuk inisialisasi Supabase client.
+
+    contoh implementasi: https://github.com/haidarhalim134/mahasiswa-sukses-backend/blob/main/examples/study-room-sample.html
     """
     return await services.join_room(db, current_user.id, room_id)
 
