@@ -30,6 +30,8 @@ async def generate_certificate(
     template_name: str, 
     replaces: dict
 ):
+    ensure_browser_installed()
+    
     with open(f"app/templates/{template_name}", "r", encoding="utf-8") as f:
         svg = f.read()
     
