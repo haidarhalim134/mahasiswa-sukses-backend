@@ -68,5 +68,15 @@ ACHIEVEMENTS: list[AchievementDef] = [
         "target": 1,
         "difficulty": QuizDifficulty.EASY,
         "xp_reward": 100,
-    }
+    },
+    {
+        "id": "week_warrior",
+        "title": "Week Warrior",
+        "description": "Login 7 hari berturut-turut",
+        "event": QuestEvent.USER_LOGIN_STREAK,
+        "type": AchievementType.QUEST,
+        "target": 7,
+        "difficulty": QuizDifficulty.EASY,
+        "xp_reward": 200,
+    },
 ]

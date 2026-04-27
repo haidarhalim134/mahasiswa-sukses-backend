@@ -195,8 +195,12 @@ async def progress_achievement(
 
         if achievement.is_completed:
             continue
-
-        achievement.progress += amount
+        
+        # if streak, set instead to the current streak, once it reaches the required streak, it should not be updated anymore
+        if event == QuestEvent.USER_LOGIN_STREAK:
+            achievement.progress = amount
+        else:
+            achievement.progress += amount
 
         if not achievement.is_completed and achievement.progress >= achievement.target:
             achievement.progress = achievement.target
@@ -284,6 +288,8 @@ async def handle_daily_streak(db: AsyncSession, user: User):
     if updated:
         await progress_quest(db, user, QuestEvent.USER_LOGIN)
         await progress_achievement(db, user, QuestEvent.USER_LOGIN)
+
+        await progress_achievement(db, user, QuestEvent.USER_LOGIN_STREAK, user.current_streak)
 
         db.add(user)
         await db.commit()

@@ -17,6 +17,7 @@ class AchievementType(str, Enum):
 
 class QuestEvent(str, Enum):
     USER_LOGIN = "user_login"
+    USER_LOGIN_STREAK = "user_login_streak"
     COMPLETE_TASK = "complete_task"
     COMPLETE_QUEST = "complete_quest"
     RECEIVE_LIKE = "receive_like"
