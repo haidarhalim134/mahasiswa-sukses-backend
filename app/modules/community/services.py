@@ -292,13 +292,20 @@ async def join_room(db: AsyncSession, user_id, room_id) -> StudyRoomRead:
             status_code=403,
             detail="Room is full"
         )
-
-    participant = StudyRoomParticipant(
-        room_id=room_id,
-        user_id=user_id
+    result = await db.execute(
+        select(StudyRoomParticipant).where(
+            StudyRoomParticipant.room_id == room_id,
+            StudyRoomParticipant.user_id == user_id
+        ).limit(1)
     )
-    db.add(participant)
-    await db.commit()
+    obj = result.scalar_one_or_none()
+    if not obj:
+        participant = StudyRoomParticipant(
+            room_id=room_id,
+            user_id=user_id
+        )
+        db.add(participant)
+        await db.commit()
 
     return await _build_room_response(db, room, user_id)
 
