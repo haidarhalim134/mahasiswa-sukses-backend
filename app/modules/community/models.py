@@ -20,7 +20,10 @@ class ForumPost(Base, table=True):
         sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     )
     author: User = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "[ForumPost.author_id]"}
+        sa_relationship_kwargs={
+            "foreign_keys": "[ForumPost.author_id]",
+            "lazy": "selectin"
+        }
     )
 
     title: str = Field(sa_column=Column(String, nullable=False))
@@ -51,7 +54,10 @@ class Comment(Base, table=True):
         sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     )
     author: User = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "[Comment.author_id]"}
+        sa_relationship_kwargs={
+            "foreign_keys": "[Comment.author_id]",
+            "lazy": "selectin"
+        }
     )
 
 
@@ -143,7 +149,10 @@ class ChatMessage(Base, table=True):
         sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     )
     author: User = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "[ChatMessage.author_id]"}
+        sa_relationship_kwargs={
+            "foreign_keys": "[ChatMessage.author_id]",
+            "lazy": "selectin"
+        }
     )
 
     content: str = Field(sa_column=Column(String, nullable=False))
