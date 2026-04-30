@@ -59,6 +59,7 @@ async def get_all_quizzes(db: AsyncSession, current_user: User) -> list[QuizOver
             QuizAttempt.id,
             QuizAttempt.quiz_id,
             QuizAttempt.passed,
+            QuizAttempt.certificate_id,
             func.row_number()
             .over(
                 partition_by=QuizAttempt.quiz_id,
@@ -80,7 +81,8 @@ async def get_all_quizzes(db: AsyncSession, current_user: User) -> list[QuizOver
         select(
             Quiz,
             func.coalesce(completion_subq.c.completion_count, 0),
-            latest_attempt_filtered.c.passed
+            latest_attempt_filtered.c.passed,
+            latest_attempt_filtered.c.certificate_id,
         )
         .outerjoin(
             completion_subq,
@@ -97,7 +99,7 @@ async def get_all_quizzes(db: AsyncSession, current_user: User) -> list[QuizOver
     rows = (await db.execute(stmt)).all()
 
     result: list[QuizOverview] = []
-    for quiz, completion_count, passed in rows:
+    for quiz, completion_count, passed, certificate_id in rows:
         result.append(
             QuizOverview(
                 id=quiz.id,
@@ -107,7 +109,7 @@ async def get_all_quizzes(db: AsyncSession, current_user: User) -> list[QuizOver
                 minimum_score=quiz.minimum_score,
                 xp_reward=quiz.xp_reward,
                 difficulty=quiz.difficulty,
-                certificate_id=None,
+                certificate_id=certificate_id,
                 completion_count=int(completion_count or 0),
                 last_attempt_successfull=bool(passed) if passed is not None else False,
             )
