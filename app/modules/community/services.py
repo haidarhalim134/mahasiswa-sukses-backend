@@ -20,6 +20,8 @@ from app.modules.community.schemas import (
     StudyRoomCreate,
     StudyRoomRead
 )
+from app.modules.gamification.schemas import QuestEvent
+from app.modules.gamification.services import progress_quest
 from app.users.schemas import PublicUserView
 from app.users.service import get_online_users_count, get_user_by_id, user_to_public_view
 
@@ -157,7 +159,9 @@ async def get_comments(db, post_id) -> list[CommentRead]:
 
 
 ## like
-async def toggle_post_like(db, user_id, post_id) -> LikeToggleResponse:
+async def toggle_post_like(db, user, post_id) -> LikeToggleResponse:
+    user_id = user.id
+
     result = await db.execute(
         select(PostLike).where(
             PostLike.post_id == post_id,
@@ -178,6 +182,15 @@ async def toggle_post_like(db, user_id, post_id) -> LikeToggleResponse:
     likes_count = await db.scalar(
         select(func.count()).where(PostLike.post_id == post_id)
     )
+
+    post_result = await db.execute(
+        select(ForumPost.author_id).where(ForumPost.id == post_id)
+    )
+    post_owner_id = post_result.scalar_one_or_none()
+
+    # TODO: prevent like toggle to trigger multiple quest progress
+    if post_owner_id and post_owner_id != user_id:
+        await progress_quest(db, user, QuestEvent.RECEIVE_LIKE)
 
     return LikeToggleResponse(
         likes_count=likes_count or 0,
