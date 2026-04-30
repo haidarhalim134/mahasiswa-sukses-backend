@@ -38,6 +38,12 @@ class Task(Base, table=True):
         sa_column=Column(Boolean, nullable=False, server_default="false")
     )
 
+    # completion dated is not really needed currently, it just needed to know if a task is completed the first time
+    # will not be nulled when task is toggled back from completion to not complete
+    completed_at: datetime = Field(
+        sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+
     deadline: datetime = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False)
     )

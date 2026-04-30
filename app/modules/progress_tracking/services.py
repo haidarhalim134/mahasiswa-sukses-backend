@@ -2,10 +2,12 @@ from datetime import datetime, timezone
 from typing import Optional, List
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlmodel import select, delete, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.gamification.services import progress_quest
+from app.modules.gamification.schemas import QuestEvent
+from app.modules.gamification.services import progress_achievement, progress_quest
 from app.modules.progress_tracking.models import Task
 from app.modules.progress_tracking.schemas import TaskCreate, TaskProgress, TaskCategory, TaskPriority
 
@@ -104,6 +106,15 @@ async def update_task_progress_service(
             is_completed=is_completed,
         )
     )
+
+    if is_completed:
+        _ = await db.execute(
+            update(Task)
+            .where(Task.id == task_id)
+            .values(
+                completed_at=datetime.now(timezone.utc)
+            )
+        )
 
     await db.commit()
 
