@@ -189,11 +189,11 @@ async def toggle_post_like(db: AsyncSession, user, post_id) -> LikeToggleRespons
 
         # handle quest progress
         post_result = await db.execute(
-            select(ForumPost.author_id).where(ForumPost.id == post_id)
+            select(ForumPost).where(ForumPost.id == post_id)
         )
-        post_owner_id = post_result.scalar_one_or_none()
-        if post_owner_id and post_owner_id != user_id:
-            await progress_quest(db, user, QuestEvent.RECEIVE_LIKE)
+        post = post_result.scalar_one_or_none()
+        if post and post.author_id != user_id:
+            await progress_quest(db, post.author, QuestEvent.RECEIVE_LIKE)
 
     await db.commit()
 
