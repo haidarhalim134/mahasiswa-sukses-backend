@@ -89,7 +89,7 @@ async def toggle_post_like(
     db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk toggle tombol like (like<->dislike) sebuah post"""
-    return await services.toggle_post_like(db, current_user.id, post_id)
+    return await services.toggle_post_like(db, current_user, post_id)
 
 
 ## study room

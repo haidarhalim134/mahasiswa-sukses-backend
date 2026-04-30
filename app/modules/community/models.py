@@ -79,6 +79,11 @@ class PostLike(Base, table=True):
         sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True, nullable=False)
     )
 
+    like: bool = Field(
+        default=True,
+        sa_column=Column(Boolean, nullable=False, server_default="true")
+    )
+
 
 class StudyRoom(Base, table=True):
     __tablename__ = "study_rooms"

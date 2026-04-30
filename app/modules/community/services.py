@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timezone
 from uuid import UUID
 from fastapi import HTTPException
-from sqlmodel import String, cast, or_, select, func, desc
+from sqlmodel import String, cast, or_, select, func, desc, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.community.models import (
@@ -91,7 +91,7 @@ async def get_forum_feed(db: AsyncSession, params: ForumFeedParams, user_id: UUI
 
 async def _build_post_response(db, post: ForumPost, user_id) -> ForumPostRead:
     likes_count = await db.scalar(
-        select(func.count()).where(PostLike.post_id == post.id)
+        select(func.count()).where(PostLike.post_id == post.id, PostLike.like == True)
     )
 
     comments_count = await db.scalar(
@@ -101,7 +101,8 @@ async def _build_post_response(db, post: ForumPost, user_id) -> ForumPostRead:
     is_liked = await db.scalar(
         select(func.count()).where(
             PostLike.post_id == post.id,
-            PostLike.user_id == user_id
+            PostLike.user_id == user_id,
+            PostLike.like == True
         )
     )
 
@@ -159,7 +160,7 @@ async def get_comments(db, post_id) -> list[CommentRead]:
 
 
 ## like
-async def toggle_post_like(db, user, post_id) -> LikeToggleResponse:
+async def toggle_post_like(db: AsyncSession, user, post_id) -> LikeToggleResponse:
     user_id = user.id
 
     result = await db.execute(
@@ -171,26 +172,34 @@ async def toggle_post_like(db, user, post_id) -> LikeToggleResponse:
     existing = result.scalar_one_or_none()
 
     if existing:
-        await db.delete(existing)
+        await db.execute(
+            update(PostLike)
+            .where(
+                PostLike.post_id == post_id,
+                PostLike.user_id == user_id
+            )
+            .values(
+                like=not existing.like
+            )
+        )
         is_liked = False
     else:
         db.add(PostLike(post_id=post_id, user_id=user_id))
         is_liked = True
 
+        # handle quest progress
+        post_result = await db.execute(
+            select(ForumPost.author_id).where(ForumPost.id == post_id)
+        )
+        post_owner_id = post_result.scalar_one_or_none()
+        if post_owner_id and post_owner_id != user_id:
+            await progress_quest(db, user, QuestEvent.RECEIVE_LIKE)
+
     await db.commit()
 
     likes_count = await db.scalar(
-        select(func.count()).where(PostLike.post_id == post_id)
+        select(func.count()).where(PostLike.post_id == post_id, PostLike.like == True)
     )
-
-    post_result = await db.execute(
-        select(ForumPost.author_id).where(ForumPost.id == post_id)
-    )
-    post_owner_id = post_result.scalar_one_or_none()
-
-    # TODO: prevent like toggle to trigger multiple quest progress
-    if post_owner_id and post_owner_id != user_id:
-        await progress_quest(db, user, QuestEvent.RECEIVE_LIKE)
 
     return LikeToggleResponse(
         likes_count=likes_count or 0,
