@@ -182,7 +182,7 @@ async def toggle_post_like(db: AsyncSession, user, post_id) -> LikeToggleRespons
                 like=not existing.like
             )
         )
-        is_liked = False
+        is_liked = not existing.like
     else:
         db.add(PostLike(post_id=post_id, user_id=user_id))
         is_liked = True
