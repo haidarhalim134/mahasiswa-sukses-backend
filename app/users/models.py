@@ -1,3 +1,4 @@
+import math
 import uuid
 from datetime import date, datetime
 from typing import Optional
@@ -101,3 +102,12 @@ class User(Base, table=True):
             server_default="0"
         )
     )
+
+    @property
+    def level(self):
+        xp_coeff = 150 
+        if self.total_xp <= 0:
+            return 1
+        
+        calculated_lvl = math.sqrt(self.total_xp / xp_coeff) + 1
+        return math.floor(calculated_lvl)

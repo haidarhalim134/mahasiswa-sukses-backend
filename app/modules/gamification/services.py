@@ -338,7 +338,8 @@ async def generate_leaderboard(
                 id=user.id,
                 full_name=user.full_name
             ),
-            xp=user.total_xp
+            xp=user.total_xp,
+            level=user.level
         ))
 
     return leaderboard

@@ -56,6 +56,7 @@ class LeaderboardItem(BaseModel):
     user: PublicUserView
     xp: int
     rank: int
+    level: int
 
 class LeaderboardPage(BaseModel):
     user_rank: int
