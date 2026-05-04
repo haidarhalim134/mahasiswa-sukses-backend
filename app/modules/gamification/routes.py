@@ -81,7 +81,7 @@ async def get_leaderboard(
         user_total_xp=current_user.total_xp,
         top_global=await generate_leaderboard(db, 100),
         # TODO: no friends feature yet, update later
-        top_friends=await generate_leaderboard(db, 100) 
+        top_friends=[] 
     )
 
 @router.get("/history", response_model=list[HistoryItem])
