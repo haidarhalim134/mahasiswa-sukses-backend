@@ -103,6 +103,11 @@ class User(Base, table=True):
         )
     )
 
+    notification_on: Optional[bool] = Field(
+        default=False,
+        nullable=False,
+    )
+
     @property
     def level(self):
         xp_coeff = 150 
