@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.supabase import get_supabase, supabase
 from app.users.models import User
-from app.users.schemas import ProfileUpdate, PublicUserView
+from app.users.schemas import ProfileUpdate, PublicUserView, SettingsUpdate
 
 
 async def create_user_profile(
@@ -127,3 +127,20 @@ async def update_profile_data(
     await db.refresh(user)
     
     return user
+
+async def update_user_setting(
+        db: AsyncSession, 
+        user_id: UUID,
+        data: SettingsUpdate
+    ):
+
+    if data.notifications != None:
+        await db.execute(
+            update(User)
+            .where(User.id == user_id)
+            .values(
+                notification_on=data.notifications
+            )
+        )
+        
+    await db.commit()
