@@ -6,12 +6,19 @@ from sqlalchemy.orm import Session
 from app.auth.schemas import LoginRequest, LoginResponse, RegisterRequest, TokenRefreshResponse
 from app.core.supabase import supabase
 from app.modules.gamification.services import handle_daily_streak
-from app.users.service import create_user_profile, get_user_by_id
+from app.users.service import create_user_profile, get_user_by_email, get_user_by_id
 
 
 
 async def register_user(db: AsyncSession, data: RegisterRequest):
 
+    email_used = await get_user_by_email(db, data.email)
+    if email_used:
+        raise HTTPException(
+            status_code=409,
+            detail="Email already used"
+        )
+        
     res = supabase.auth.sign_up(
         {
             "email": data.email,
