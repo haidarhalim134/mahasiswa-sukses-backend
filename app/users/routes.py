@@ -10,7 +10,7 @@ from app.core.storage_handler import Buckets, get_storage
 from app.db.session import get_db
 from app.users.models import User
 from app.users.schemas import ProfileUpdate, SettingsUpdate, UserProfile, UserStats
-from app.users.service import get_user_by_id, update_profile_data, update_user_setting
+from app.users.service import get_user_by_id, update_profile_data, update_user_setting, user_to_private_view
 
 
 router = APIRouter(prefix="/api/v1/user", tags=["user"])
@@ -29,15 +29,7 @@ async def get_my_profile(
     current_user: User = Depends(get_current_user),
 ):
     """Endpoint untuk mengambil data profile user"""
-    return UserProfile(
-        id=current_user.id,
-        email=current_user.email,
-        full_name=current_user.full_name,
-        phone_number=current_user.phone_number,
-        nim=current_user.nim,
-        birth_date=current_user.birth_date,
-        notifications=current_user.notification_on
-    )
+    return user_to_private_view(current_user)
 
 
 @router.post("/profile", response_model=UserProfile)

@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.supabase import get_supabase, supabase
 from app.users.models import User
-from app.users.schemas import ProfileUpdate, PublicUserView, SettingsUpdate
+from app.users.schemas import ProfileUpdate, PublicUserView, SettingsUpdate, UserProfile
 
 
 async def create_user_profile(
@@ -64,6 +64,17 @@ def user_to_public_view(user: User):
         full_name=user.full_name
     )
 
+def user_to_private_view(user: User):
+    return UserProfile(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        phone_number=user.phone_number,
+        nim=user.nim,
+        birth_date=user.birth_date,
+        notifications=user.notification_on
+    )
+
 async def update_last_seen(
     db: AsyncSession,
     user_id,
@@ -94,7 +105,7 @@ async def update_profile_data(
     db: AsyncSession, 
     user: User, 
     data: ProfileUpdate
-) -> User:
+) -> UserProfile:
     if data.email:
         email_used = await get_user_by_email(db, data.email)
         if email_used and email_used.id != user.id:
@@ -126,7 +137,7 @@ async def update_profile_data(
     await db.commit()
     await db.refresh(user)
     
-    return user
+    return user_to_private_view(user)
 
 async def update_user_setting(
         db: AsyncSession, 
