@@ -1,7 +1,8 @@
+import hashlib
 import io
 from PIL import Image
 from uuid import UUID
-from fastapi import APIRouter, File, HTTPException, Response, UploadFile, Depends
+from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile, Depends
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -104,6 +105,7 @@ async def update_settings(
 )
 async def get_avatar(
     user_id: UUID, 
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """Endpoint untuk mengambil avatar user tertentu"""
@@ -113,25 +115,37 @@ async def get_avatar(
         raise HTTPException(status_code=404, detail="User not found")
 
     storage = get_storage()
-
     path = f"{user_id}.webp"
+
+    data = None
 
     try:
         data = await storage.download(Buckets.AVATAR.value, path)
-        return Response(content=data, media_type="image/webp")
     except Exception:
-        pass
+        if not user.full_name:
+            raise HTTPException(status_code=400, detail="User full name not available")
 
-    if not user.full_name:
-        raise HTTPException(status_code=400, detail="User full name not available")
+        name_query = user.full_name.replace(" ", "+")
+        url = f"https://ui-avatars.com/api/?name={name_query}&format=webp"
 
-    name_query = user.full_name.replace(" ", "+")
-    url = f"https://ui-avatars.com/api/?name={name_query}&format=webp"
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url)
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(url)
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail="Failed to fetch avatar")
 
-    if resp.status_code != 200:
-        raise HTTPException(status_code=502, detail="Failed to fetch avatar")
+        data = resp.content
 
-    return Response(content=resp.content, media_type="image/webp")
+    # cache stuff
+    etag = hashlib.md5(data).hexdigest()
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304)
+
+    return Response(
+        content=data,
+        media_type="image/webp",
+        headers={
+            "ETag": etag,
+            "Cache-Control": "public, s-maxage=5, stale-while-revalidate=3600"
+        }
+    )
