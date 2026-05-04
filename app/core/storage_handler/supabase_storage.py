@@ -1,13 +1,18 @@
 from .base_handler import BaseStorage
-from app.core.supabase import supabase
+from app.core.supabase import get_supabase
 
 
 class SupabaseStorage(BaseStorage):
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.supabase = get_supabase()
+
+
     async def upload(self, file, bucket: str, path: str, content_type=None) -> str:
         file_bytes = file.read()
 
-        supabase.storage.from_(bucket).upload(
+        self.supabase.storage.from_(bucket).upload(
             path,
             file_bytes,
             {"content-type": content_type} if content_type else {}
@@ -16,10 +21,10 @@ class SupabaseStorage(BaseStorage):
         return self.get_public_url(bucket, path)
 
     async def download(self, bucket: str, path: str) -> bytes:
-        return supabase.storage.from_(bucket).download(path)
+        return self.supabase.storage.from_(bucket).download(path)
 
     async def delete(self, bucket: str, path: str) -> None:
-        supabase.storage.from_(bucket).remove([path])
+        self.supabase.storage.from_(bucket).remove([path])
 
     def get_public_url(self, bucket: str, path: str) -> str:
-        return supabase.storage.from_(bucket).get_public_url(path)
+        return self.supabase.storage.from_(bucket).get_public_url(path)
