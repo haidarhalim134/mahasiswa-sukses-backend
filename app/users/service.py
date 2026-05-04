@@ -46,6 +46,16 @@ async def get_user_by_id(
 
     return result.scalar_one_or_none()
 
+async def get_user_by_email(
+    db: AsyncSession,
+    email: str
+):
+    stmt = select(User).where(User.email == email)
+
+    result = await db.execute(stmt)
+
+    return result.scalar_one_or_none()
+
 def user_to_public_view(user: User):
     return PublicUserView(
         id=user.id,
