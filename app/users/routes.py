@@ -44,7 +44,7 @@ async def update_profile(
     data: ProfileUpdate,
     current_user: User = Depends(get_current_user),
 ):
-    """Endpoint untuk mengupdate data profile user"""
+    """Endpoint untuk mengupdate data profile user. Set None/null untuk field yang tidak akan di update"""
     raise NotImplementedError
 
 
@@ -96,7 +96,7 @@ async def update_settings(
     settings: SettingsUpdate,
     current_user: User = Depends(get_current_user),
 ):
-    """Endpoint untuk memperbarui setting profile mahasiswa"""
+    """Endpoint untuk memperbarui setting profile mahasiswa. Set None/null untuk field yang tidak akan di update"""
     raise NotImplementedError
 
 @router.get(

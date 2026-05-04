@@ -21,8 +21,10 @@ class UserProfile(BaseModel):
 class ProfileUpdate(BaseModel):
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    nim: Optional[str] = None
+    birth_date: Optional[date] = None
     password: Optional[str] = Field(None, min_length=8)
-    confirm_password: Optional[str] = None
 
 class SettingsUpdate(BaseModel):
     notifications: Optional[bool] = None
