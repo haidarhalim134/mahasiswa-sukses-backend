@@ -10,7 +10,7 @@ from app.core.storage_handler import Buckets, get_storage
 from app.db.session import get_db
 from app.users.models import User
 from app.users.schemas import ProfileUpdate, SettingsUpdate, UserProfile, UserStats
-from app.users.service import get_user_by_id
+from app.users.service import get_user_by_id, update_profile_data
 
 
 router = APIRouter(prefix="/api/v1/user", tags=["user"])
@@ -43,9 +43,10 @@ async def get_my_profile(
 async def update_profile(
     data: ProfileUpdate,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ):
     """Endpoint untuk mengupdate data profile user. Set None/null untuk field yang tidak akan di update"""
-    raise NotImplementedError
+    return await update_profile_data(db, current_user, data)
 
 
 @router.post("/profile/avatar")
@@ -90,7 +91,6 @@ async def upload_avatar(
     #     pass
 
 
-# 3. Preferences & Account
 @router.post("/settings")
 async def update_settings(
     settings: SettingsUpdate,

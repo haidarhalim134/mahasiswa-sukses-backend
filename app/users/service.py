@@ -4,11 +4,13 @@ from typing import Any
 from uuid import UUID
 from datetime import date, datetime, timedelta, timezone
 
+from fastapi import HTTPException
 from sqlmodel import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.supabase import get_supabase, supabase
 from app.users.models import User
-from app.users.schemas import PublicUserView
+from app.users.schemas import ProfileUpdate, PublicUserView
 
 
 async def create_user_profile(
@@ -87,3 +89,41 @@ async def get_online_users_count(
     )
 
     return result or 0
+
+async def update_profile_data(
+    db: AsyncSession, 
+    user: User, 
+    data: ProfileUpdate
+) -> User:
+    if data.email:
+        email_used = await get_user_by_email(db, data.email)
+        if email_used and email_used.id != user.id:
+            raise HTTPException(
+                status_code=409,
+                detail="Email already used"
+        )
+
+    auth_updates = {}
+    if data.email and data.email != user.email:
+        auth_updates["email"] = data.email
+    if data.password:
+        auth_updates["password"] = data.password
+
+    if auth_updates:
+        # TODO: supabase cleanup
+        get_supabase().auth.admin.update_user_by_id(str(user.id), auth_updates)
+
+    # exclude none
+    update_data = data.model_dump(exclude_unset=True)
+    
+    # remove password, handled by supabase
+    update_data.pop("password", None)
+
+    for key, value in update_data.items():
+        setattr(user, key, value)
+
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    
+    return user
