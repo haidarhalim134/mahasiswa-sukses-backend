@@ -205,7 +205,8 @@ async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission
     total_questions = len(questions)
     passed = correct_answers >= quiz.minimum_score
     points_gained = quiz.xp_reward if passed else 0
-    streak_bonus = 0
+    # TODO: login streak giving extra quiz completion xp? might have to be changed later
+    streak_bonus = current_user.current_streak * 5
 
     attempt.submitted_at = datetime.now(timezone.utc)
     attempt.correct_answers = correct_answers
