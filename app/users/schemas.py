@@ -17,6 +17,7 @@ class UserProfile(BaseModel):
     phone_number: Optional[str]
     nim: Optional[str]
     birth_date: Optional[date]
+    notifications: Optional[bool]
 
 class ProfileUpdate(BaseModel):
     full_name: Optional[str] = None

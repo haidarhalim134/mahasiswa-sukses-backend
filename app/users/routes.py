@@ -35,7 +35,8 @@ async def get_my_profile(
         full_name=current_user.full_name,
         phone_number=current_user.phone_number,
         nim=current_user.nim,
-        birth_date=current_user.birth_date
+        birth_date=current_user.birth_date,
+        notifications=current_user.notification_on
     )
 
 
