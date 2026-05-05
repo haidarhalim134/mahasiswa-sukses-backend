@@ -103,8 +103,14 @@ class User(Base, table=True):
         )
     )
 
+    # user preferences
     notification_on: Optional[bool] = Field(
         default=False,
+        nullable=False,
+    )
+
+    share_leaderboard_stats: Optional[bool] = Field(
+        default=True,
         nullable=False,
     )
 

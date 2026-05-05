@@ -72,7 +72,8 @@ def user_to_private_view(user: User):
         phone_number=user.phone_number,
         nim=user.nim,
         birth_date=user.birth_date,
-        notifications=user.notification_on
+        notifications=user.notification_on,
+        share_leaderboard_stats=user.share_leaderboard_stats
     )
 
 async def update_last_seen(
@@ -151,6 +152,15 @@ async def update_user_setting(
             .where(User.id == user_id)
             .values(
                 notification_on=data.notifications
+            )
+        )
+
+    if data.share_leaderboard_stats != None:
+        await db.execute(
+            update(User)
+            .where(User.id == user_id)
+            .values(
+                share_leaderboard_stats=data.share_leaderboard_stats
             )
         )
         

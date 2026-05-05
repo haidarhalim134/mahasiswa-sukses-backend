@@ -4,7 +4,7 @@ from typing import Any, Optional
 from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import desc, func, select, update
+from sqlmodel import and_, desc, func, or_, select, update
 
 from app.modules.gamification.gamification import ACHIEVEMENTS, QUESTS
 from app.modules.gamification.models import AchievementHistory, QuestHistory, UserAchievement, UserQuest
@@ -21,6 +21,7 @@ from uuid import UUID
 
 from app.users.models import User
 from app.users.schemas import PublicUserView
+from app.users.service import get_user_by_id
 
 
 
@@ -321,43 +322,50 @@ async def update_login_streak(user: User):
 
 async def generate_leaderboard(
     db: AsyncSession,
+    user: User,
     limit: int = 10
 ) -> list[LeaderboardItem]:
     result = await db.execute(
         select(User)
-        .order_by(desc(User.total_xp))
+        .where(or_(User.share_leaderboard_stats == True, User.id == user.id))
+        .order_by(desc(User.total_xp), User.full_name.asc())
         .limit(limit)
     )
     users = result.scalars().all()
 
     leaderboard: list[LeaderboardItem] = []
-    for idx, user in enumerate(users, start=1):
+    for idx, u in enumerate(users, start=1):
         leaderboard.append(LeaderboardItem(
             rank=idx,
             user=PublicUserView(
-                id=user.id,
-                full_name=user.full_name
+                id=u.id,
+                full_name=u.full_name
             ),
-            xp=user.total_xp,
-            level=user.level
+            xp=u.total_xp,
+            level=u.level
         ))
 
     return leaderboard
 
 async def get_user_rank(db: AsyncSession, user_id: UUID) -> int:
-    result = await db.execute(
-        select(User.total_xp).where(User.id == user_id)
-    )
-    user_xp = result.scalar_one_or_none()
+    user = await get_user_by_id(db, user_id)
 
-    if user_xp is None:
+    if user is None:
         raise ValueError("User not found")
 
     result = await db.execute(
         select(func.count())
         .select_from(User)
         .where(
-            User.total_xp > user_xp
+            or_(User.share_leaderboard_stats == True, User.id == user_id),
+            or_(
+                User.total_xp > user.total_xp,
+                # same xp, ordered first due to name
+                and_(
+                    User.total_xp == user.total_xp,
+                    User.full_name < user.full_name
+                ),
+            )
         )
     )
 

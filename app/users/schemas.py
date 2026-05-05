@@ -18,6 +18,7 @@ class UserProfile(BaseModel):
     nim: Optional[str]
     birth_date: Optional[date]
     notifications: Optional[bool]
+    share_leaderboard_stats: Optional[bool]
 
 class ProfileUpdate(BaseModel):
     full_name: Optional[str] = None
@@ -29,6 +30,7 @@ class ProfileUpdate(BaseModel):
 
 class SettingsUpdate(BaseModel):
     notifications: Optional[bool] = None
+    share_leaderboard_stats: Optional[bool] = None
 
 class PublicUserView(BaseModel):
     id: UUID

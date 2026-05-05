@@ -79,7 +79,7 @@ async def get_leaderboard(
     return LeaderboardPage(
         user_rank=await get_user_rank(db, current_user.id),
         user_total_xp=current_user.total_xp,
-        top_global=await generate_leaderboard(db, 100),
+        top_global=await generate_leaderboard(db, current_user, 100),
         # TODO: no friends feature yet, update later
         top_friends=[] 
     )
