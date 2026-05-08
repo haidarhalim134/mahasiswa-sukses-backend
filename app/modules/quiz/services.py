@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.certificate.schemas import CertificateSource
 from app.modules.certificate.services import generate_certificate
+from app.modules.gamification.services import add_xp
 from app.modules.quiz.models import Quiz, QuizAttempt, QuizAttemptAnswer, QuizQuestion
 from app.modules.quiz.schemas import (
     GeneratedCertificate,
@@ -206,7 +207,7 @@ async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission
     passed = correct_answers >= quiz.minimum_score
     points_gained = quiz.xp_reward if passed else 0
     # TODO: login streak giving extra quiz completion xp? might have to be changed later
-    streak_bonus = current_user.current_streak * 5
+    streak_bonus = current_user.current_streak * 5 if passed else 0
 
     attempt.submitted_at = datetime.now(timezone.utc)
     attempt.correct_answers = correct_answers
@@ -218,6 +219,9 @@ async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission
 
     await db.commit()
     await db.refresh(attempt)
+
+    if passed:
+        await add_xp(db, current_user, points_gained + streak_bonus)
 
     return QuizResult(
         correct_answers=correct_answers,
