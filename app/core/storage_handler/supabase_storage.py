@@ -12,10 +12,14 @@ class SupabaseStorage(BaseStorage):
     async def upload(self, file, bucket: str, path: str, content_type=None) -> str:
         file_bytes = file.read()
 
+        file_options = {"upsert": "true"}
+        if content_type:
+            file_options["content-type"] = content_type
+
         self.supabase.storage.from_(bucket).upload(
             path,
             file_bytes,
-            {"content-type": content_type} if content_type else {}
+            file_options=file_options
         )
 
         return self.get_public_url(bucket, path)
