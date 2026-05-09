@@ -137,15 +137,15 @@ async def get_avatar(
         data = resp.content
 
     # cache stuff
-    etag = hashlib.md5(data).hexdigest()
-    if request.headers.get("if-none-match") == etag:
-        return Response(status_code=304)
+    # etag = hashlib.md5(data).hexdigest()
+    # if request.headers.get("if-none-match") == etag:
+    #     return Response(status_code=304)
 
     return Response(
         content=data,
         media_type="image/webp",
-        headers={
-            "ETag": etag,
-            "Cache-Control": "public, s-maxage=5, stale-while-revalidate=3600"
-        }
+        # headers={
+        #     "ETag": etag,
+        #     "Cache-Control": "public, s-maxage=5, stale-while-revalidate=3600"
+        # }
     )
