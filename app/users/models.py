@@ -44,6 +44,13 @@ class User(Base, table=True):
         nullable=True
     )
 
+    # unique
+    user_name: Optional[str] = Field(
+        default=None,
+        unique=True,
+        nullable=False
+    )
+
     nim: Optional[str] = Field(
         default=None,
         unique=True,
@@ -52,7 +59,7 @@ class User(Base, table=True):
 
     full_name: str = Field(
         default=None,
-        nullable=True,
+        nullable=False,
     )
 
     birth_date: Optional[date] = Field(
