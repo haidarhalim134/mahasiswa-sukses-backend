@@ -14,3 +14,7 @@ class FriendRead(PublicUserView):
 
 class FriendRequest(BaseModel):
     username_or_email: str
+
+class FriendSummary(BaseModel):
+    friend_count: int
+    friend_request_count: int

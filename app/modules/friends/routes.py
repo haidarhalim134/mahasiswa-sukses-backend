@@ -5,7 +5,7 @@ from uuid import UUID
 from app.auth.permissions import get_current_user
 from app.db.session import get_db
 from app.users.models import User
-from app.modules.friends.schemas import FriendRead, FriendRequest
+from app.modules.friends.schemas import FriendRead, FriendRequest, FriendSummary
 from app.users.schemas import PublicUserView
 
 router = APIRouter(prefix="/friends", tags=["friends"])
@@ -16,6 +16,14 @@ async def list_friends(
     db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk mengambil list teman"""
+    raise NotImplementedError
+
+@router.get("/summary", response_model=FriendSummary)
+async def friend_summary(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Endpoint untuk mengambil stats pertemanan"""
     raise NotImplementedError
 
 @router.post("/request")
