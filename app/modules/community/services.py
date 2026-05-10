@@ -280,6 +280,13 @@ async def _build_room_response(db, room: StudyRoom, user_id) -> StudyRoomRead:
         )
     )
 
+    is_joined = await db.scalar(
+        select(func.count()).where(
+            StudyRoomParticipant.room_id == room.id,
+            StudyRoomParticipant.user_id == user_id
+        )
+    )
+
     # TODO: doing this query twice for the join room function, possible optimization
     current_participant_count = await db.scalar(
         select(func.count()).where(StudyRoomParticipant.room_id == room.id)
@@ -290,6 +297,8 @@ async def _build_room_response(db, room: StudyRoom, user_id) -> StudyRoomRead:
         title=room.title,
         description=room.description,
         created_at=room.created_at,
+        is_joined=is_joined,
+        is_active=room.is_active,
         author=user_to_public_view(room.author),
         likes_count=likes_count or 0,
         is_liked=bool(is_liked),
