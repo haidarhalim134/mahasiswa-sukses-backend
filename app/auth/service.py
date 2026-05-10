@@ -36,7 +36,7 @@ async def register_user(db: AsyncSession, data: RegisterRequest):
         email=data.email,
         phone_number=data.phone_number,
         nim=data.nim,
-        full_name=data.full_name,
+        full_name=data.full_name.strip(),
         birth_date=data.birth_date,
     )
 
