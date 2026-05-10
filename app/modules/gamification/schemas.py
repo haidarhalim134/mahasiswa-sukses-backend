@@ -48,6 +48,7 @@ class AchievementItem(BaseModel):
 class AchievementSummary(BaseModel):
     total_quest: int
     total_quest_completed: int
+    current_level: int
     total_xp_earned: int
     current_ranking: int
     current_streak: int

@@ -62,6 +62,7 @@ async def get_gamification_summary(
     return AchievementSummary(
         total_quest=total_quest,
         total_quest_completed=total_quest_completed,
+        current_level=current_user.level,
         total_xp_earned=current_user.total_xp,
         current_ranking=await get_user_rank(db, current_user.id),
         current_streak=current_user.current_streak
