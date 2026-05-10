@@ -87,7 +87,9 @@ def user_to_private_view(user: User):
         nim=user.nim,
         birth_date=user.birth_date,
         notifications=user.notification_on,
-        share_leaderboard_stats=user.share_leaderboard_stats
+        share_leaderboard_stats=user.share_leaderboard_stats,
+        total_xp=user.total_xp,
+        current_level=user.level
     )
 
 async def update_last_seen(

@@ -20,6 +20,8 @@ class UserProfile(BaseModel):
     birth_date: Optional[date]
     notifications: Optional[bool]
     share_leaderboard_stats: Optional[bool]
+    total_xp: Optional[int]
+    current_level: Optional[int]
 
 class ProfileUpdate(BaseModel):
     username: Optional[str] = None
