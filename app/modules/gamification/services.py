@@ -92,6 +92,28 @@ async def progress_quest(
         elif event == QuestEvent.STAY_1_HOUR:
             cooldown = 55
 
+        if event == QuestEvent.STAY_1_HOUR and quest.last_progress_at:
+            ten_min_qdef = get_quest_def_by_event(QuestEvent.STAY_10_MIN)[0]
+            
+            res_10 = await db.execute(
+                select(UserQuest).where(
+                    UserQuest.user_id == user.id,
+                    UserQuest.quest_id == ten_min_qdef["id"]
+                )
+            )
+            quest_10 = res_10.scalar_one_or_none()
+            
+            heartbeat_limit = 13 
+            if not quest_10 or not quest_10.last_progress_at:
+                is_continuous = False
+            else:
+                heartbeat_delta = now - quest_10.last_progress_at
+                is_continuous = (heartbeat_delta.total_seconds() / 60) <= heartbeat_limit
+
+            if not is_continuous:
+                quest.last_progress_at = now
+                continue
+
         if cooldown and quest.last_progress_at:
             delta = now - quest.last_progress_at
 
