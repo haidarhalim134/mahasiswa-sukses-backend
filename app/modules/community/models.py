@@ -169,6 +169,10 @@ class ChatMessage(Base, table=True):
 class RoomChatLike(Base, table=True):
     __tablename__ = "room_chat_likes"
 
+    room_id: int = Field(
+        sa_column=Column(Integer, ForeignKey("study_rooms.id"), primary_key=True, nullable=False, index=True)
+    )
+
     chat_id: int = Field(
         sa_column=Column(Integer, ForeignKey("study_room_messages.id"), primary_key=True, nullable=False, index=True)
     )

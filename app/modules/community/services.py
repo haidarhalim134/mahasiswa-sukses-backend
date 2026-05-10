@@ -437,7 +437,7 @@ async def toggle_room_chat_like(db, user_id, room_chat_id) -> LikeToggleResponse
         await db.delete(existing)
         is_liked = False
     else:
-        db.add(RoomChatLike(chat_id=room_chat_id, user_id=user_id))
+        db.add(RoomChatLike(chat_id=room_chat_id, user_id=user_id, room_id=chat.room_id))
         is_liked = True
 
     await db.commit()

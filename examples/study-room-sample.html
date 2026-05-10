@@ -109,7 +109,8 @@
       channel.on('postgres_changes', {
           event: '*', 
           schema: 'public',
-          table: 'room_chat_likes'
+          table: 'room_chat_likes',
+          filter: `room_id=eq.${roomId}`
         },
         payload => {
           handleLikeChange(payload);

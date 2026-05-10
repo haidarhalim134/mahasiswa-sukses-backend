@@ -137,14 +137,15 @@ async def join_study_room(
 
     2. Listen Postgres Changes:
        Gunakan `.on('postgres_changes', ...)` pada table 'study_room_messages' untuk memantau secara realtime pesan yang user lain kirimkan. 
-       Gunakan filter: `filter: 'room_id=eq.{room_id}'` agar user tidak menerima 
-       pesan dari room lain.
 
        Gunakan `.on('postgres_changes', { event: '*', table: 'room_chat_likes' }, ...)` pada table 'room_chat_likes' untuk memantau secara realtime like dan unlike.
        Update UI secara lokal berdasarkan `payload.eventType`:
        - 'INSERT': Tambah jumlah like pada chat terkait.
        - 'DELETE': Kurangi jumlah like pada chat terkait.
        Gunakan `chat_id` dari payload untuk menargetkan elemen chat tertentu untuk mengupdate jumlah like dan dislike.
+
+       Gunakan filter: `filter: 'room_id=eq.{room_id}'` agar user tidak menerima 
+       pesan dan event like dari room lain.
 
     3. Presence (Seat Count & Status):
        Gunakan `.on('presence', { event: 'sync' }, ...)` untuk memantau siapa saja yang online.
