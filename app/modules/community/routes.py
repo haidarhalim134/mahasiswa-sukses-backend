@@ -206,5 +206,5 @@ async def toggle_room_chat_like(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Endpoint untuk toggle tombol like (like<->dislike) sebuah chat di dalam study room"""
+    """Endpoint untuk toggle tombol like (like<->dislike) sebuah chat di dalam study room."""
     return await services.toggle_room_chat_like(db, current_user.id, room_message_id)
