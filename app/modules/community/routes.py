@@ -111,7 +111,7 @@ async def create_room(
     """Endpoint untuk membuat room baru"""
     return await services.create_room(db, current_user.id, room)
 
-@router.post("/room/{post_id}/like", response_model=LikeToggleResponse)
+@router.post("/room/{room_id}/like", response_model=LikeToggleResponse)
 async def toggle_room_like(
     room_id: int,
     current_user: User = Depends(get_current_user),
