@@ -99,6 +99,7 @@ app.include_router(progress_tracking.router)
 app.include_router(quiz.router)
 app.include_router(certificate.router)
 app.include_router(task.router)
+app.include_router(friends.router)
 
 @app.get("/")
 async def health():
