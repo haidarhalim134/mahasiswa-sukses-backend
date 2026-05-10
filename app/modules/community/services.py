@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 from fastapi import HTTPException
 from sqlmodel import String, cast, or_, select, func, desc, update
+from sqlalchemy.orm import aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.community.models import (
@@ -360,12 +361,16 @@ async def leave_room(db, user_id, room_id):
 async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessageRead]:
     await _check_study_room_membership(db, user_id, room_id)
 
+    ReplyAlias = aliased(ChatMessage)
+
     stmt = (
         select(
             ChatMessage, 
-            func.count(RoomChatLike.chat_id).label("likes_count")
+            func.count(RoomChatLike.chat_id).label("likes_count"),
+            func.count(ReplyAlias.id).label("reply_count")
         )
         .outerjoin(RoomChatLike, ChatMessage.id == RoomChatLike.chat_id)
+        .outerjoin(ReplyAlias, ChatMessage.id == ReplyAlias.replying_to)
         .where(ChatMessage.room_id == room_id)
         .group_by(ChatMessage.id)
     )
@@ -384,11 +389,12 @@ async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessa
             room_id=m.room_id,
             author=user_to_public_view(m.author),
             content=m.content,
-            likes_count=l_count, # Map the aggregated count here
+            likes_count=l_count, 
+            reply_count=r_count,
             replying_to=m.replying_to,
             created_at=m.created_at
         )
-        for m, l_count in rows
+        for m, l_count, r_count in rows
     ]
 
 
@@ -428,6 +434,7 @@ async def send_message(db, user, room_id, payload: ChatMessageCreate) -> ChatMes
         author=author,
         content=msg.content,
         likes_count=0, # because its new
+        reply_count=0,
         replying_to=msg.replying_to,
         created_at=msg.created_at
     )
