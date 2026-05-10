@@ -192,3 +192,12 @@ async def send_chat_message(
     Endpoint untuk mengirim pesan ke study room.
     """
     return await services.send_message(db, current_user, room_id, payload)
+
+@router.post("/room/message/{room_message_id}/like", response_model=LikeToggleResponse)
+async def toggle_room_chat_like(
+    room_message_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Endpoint untuk toggle tombol like (like<->dislike) sebuah chat di dalam study room"""
+    return await services.toggle_room_chat_like(db, current_user.id, room_message_id)

@@ -165,3 +165,14 @@ class ChatMessage(Base, table=True):
     created_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False)
     )
+
+class RoomChatLike(Base, table=True):
+    __tablename__ = "room_chat_likes"
+
+    chat_id: int = Field(
+        sa_column=Column(Integer, ForeignKey("study_room_messages.id"), primary_key=True, nullable=False, index=True)
+    )
+
+    user_id: uuid.UUID = Field(
+        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True, nullable=False)
+    )

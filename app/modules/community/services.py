@@ -411,6 +411,37 @@ async def send_message(db, user, room_id, payload) -> ChatMessageRead:
         created_at=msg.created_at
     )
 
+async def toggle_room_chat_like(db, user_id, room_chat_id) -> LikeToggleResponse:
+    chat: ChatMessage = await db.get(ChatMessage, room_chat_id)
+    await _check_study_room_membership(db, user_id, chat.room_id)
+
+    result = await db.execute(
+        select(RoomChatLike).where(
+            RoomChatLike.chat_id == room_chat_id,
+            RoomChatLike.user_id == user_id
+        )
+    )
+    existing = result.scalar_one_or_none()
+
+    if existing:
+        await db.delete(existing)
+        is_liked = False
+    else:
+        db.add(RoomChatLike(chat_id=room_chat_id, user_id=user_id))
+        is_liked = True
+
+    await db.commit()
+
+    likes_count = await db.scalar(
+        select(func.count()).where(RoomChatLike.chat_id == room_chat_id)
+    )
+
+    return LikeToggleResponse(
+        likes_count=likes_count or 0,
+        is_liked=is_liked
+    )
+
+
 async def _check_study_room_membership(db, user_id, room_id):
     result = await db.execute(
         select(StudyRoomParticipant).where(
