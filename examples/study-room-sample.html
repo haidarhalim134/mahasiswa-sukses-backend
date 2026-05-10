@@ -13,6 +13,8 @@
     pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; overflow-x: auto; border-radius: 8px; font-size: 13px; max-height: 400px; }
     .status-group { display: flex; gap: 20px; font-size: 0.9em; color: #666; }
     .typing-text { color: #3ecf8e; font-style: italic; }
+    .like-btn { width: auto; padding: 2px 8px; font-size: 12px; background: #444; margin-left: 10px; }
+    .like-btn.active { background: #e0245e; }
   </style>
 </head>
 <body>
@@ -49,10 +51,13 @@
   <pre id="messages">[]</pre>
 
   <script>
-    const BASE = "https://mahasiswa-sukses-backend.vercel.app/api/v1/community";
+    // const BASE = "https://mahasiswa-sukses-backend.vercel.app/api/v1/community";
+    const BASE = "http://127.0.0.1:8000/api/v1/community";
     let supabaseClient = null;
     let channel = null;
     let typingTimeout = null;
+    // Map to track like counts locally: { messageId: count }
+    let messageLikes = new Map();
 
     function headers() {
       return {
@@ -97,6 +102,17 @@
         },
         payload => {
           appendMessage(payload.new)
+        }
+      );
+
+      // listen for like toggle changes
+      channel.on('postgres_changes', {
+          event: '*', 
+          schema: 'public',
+          table: 'room_chat_likes'
+        },
+        payload => {
+          handleLikeChange(payload);
         }
       );
 
@@ -181,25 +197,108 @@
       document.getElementById("chatMessage").value = "";
     }
 
+    async function toggleLike(messageId) {
+      try {
+        await fetch(`${BASE}/room/message/${messageId}/like`, {
+          method: "POST",
+          headers: headers()
+        });
+      } catch (e) {
+        console.error("Failed to toggle like", e);
+      }
+    }
+
+    function handleLikeChange(payload) {
+      const chatId = payload.new.chat_id ?? payload.old.chat_id;
+      if (!chatId) return;
+
+      const messageRows = document.querySelectorAll("#messages div");
+      
+      let targetBtn = null;
+      messageRows.forEach(row => {
+        if (row.innerText.includes(`[${chatId}]`)) {
+          targetBtn = row.querySelector(".like-btn");
+        }
+      });
+      console.log(targetBtn, chatId, parseInt(targetBtn.innerText.replace('❤ ', '')) || 0, payload.eventType)
+      if (targetBtn) {
+        let currentCount = parseInt(targetBtn.innerText.replace('❤ ', '')) || 0;
+        
+        if (payload.eventType === 'INSERT') {
+          currentCount++;
+          targetBtn.classList.add('active'); 
+        } else if (payload.eventType === 'DELETE') {
+          currentCount = Math.max(0, currentCount - 1);
+          targetBtn.classList.remove('active');
+        }
+
+        targetBtn.innerText = `❤ ${currentCount}`;
+      } else {
+        loadHistory(document.getElementById("roomId").value);
+      }
+    }
+
     async function loadHistory(roomId) {
       try {
         const res = await fetch(`${BASE}/rooms/${roomId}/messages`, { headers: headers() });
         const data = await res.json();
-        document.getElementById("messages").innerText = JSON.stringify(data, null, 2);
+        renderMessages(data);
       } catch (e) {
         console.error("Failed to load history", e);
       }
     }
 
+    function renderMessages(data) {
+        const el = document.getElementById("messages");
+        el.innerHTML = "";
+        const list = Array.isArray(data) ? data : [];
+        
+        list.forEach(msg => {
+            const container = document.createElement("div");
+            container.style.borderBottom = "1px solid #333";
+            container.style.padding = "5px 0";
+            
+            const text = document.createElement("span");
+            text.innerText = `[${msg.id}] ${msg.author.id}...: ${msg.content}`;
+            
+            const likeBtn = document.createElement("button");
+            likeBtn.className = "like-btn";
+            likeBtn.innerText = `❤ ${msg.likes_count || 0}`;
+            likeBtn.onclick = () => toggleLike(msg.id);
+            
+            container.appendChild(text);
+            container.appendChild(likeBtn);
+            el.appendChild(container);
+        });
+
+        if(list.length === 0) el.innerText = "[]";
+    }
+
     function appendMessage(msg) {
       const el = document.getElementById("messages");
-      try {
-        const current = JSON.parse(el.innerText);
-        const updated = Array.isArray(current) ? [msg, ...current] : [msg];
-        el.innerText = JSON.stringify(updated, null, 2);
-      } catch (e) {
-        el.innerText = JSON.stringify([msg], null, 2);
+      
+      if (el.innerText === "[]") {
+        el.innerHTML = "";
       }
+
+      const container = document.createElement("div");
+      container.setAttribute("data-msg-id", msg.id);
+      container.style.borderBottom = "1px solid #333";
+      container.style.padding = "5px 0";
+
+      const text = document.createElement("span");
+      const userId = msg.author_id;
+      text.innerText = `[${msg.id}] ${userId}...: ${msg.content}`;
+
+      const likeBtn = document.createElement("button");
+      likeBtn.className = "like-btn";
+      likeBtn.innerText = `❤ 0`; // new messages start with 0 likes
+      likeBtn.onclick = () => toggleLike(msg.id);
+
+      container.appendChild(text);
+      container.appendChild(likeBtn);
+      
+      el.prepend(container);
     }
 
     async function leaveRoom() {
@@ -210,6 +309,7 @@
         channel = null;
         document.getElementById("presence").innerText = "0";
         document.getElementById("typing").innerText = "-";
+        document.getElementById("messages").innerText = "[]";
       }
     }
   </script>

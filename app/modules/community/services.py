@@ -6,7 +6,7 @@ from sqlmodel import String, cast, or_, select, func, desc, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.community.models import (
-    ForumPost, Comment, PostLike,
+    ForumPost, Comment, PostLike, RoomChatLike,
     StudyRoom, StudyRoomLike, StudyRoomParticipant, ChatMessage
 )
 from app.modules.community.schemas import (
@@ -359,7 +359,15 @@ async def leave_room(db, user_id, room_id):
 async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessageRead]:
     await _check_study_room_membership(db, user_id, room_id)
 
-    stmt = select(ChatMessage).where(ChatMessage.room_id == room_id)
+    stmt = (
+        select(
+            ChatMessage, 
+            func.count(RoomChatLike.chat_id).label("likes_count")
+        )
+        .outerjoin(RoomChatLike, ChatMessage.id == RoomChatLike.chat_id)
+        .where(ChatMessage.room_id == room_id)
+        .group_by(ChatMessage.id)
+    )
 
     if before_id:
         stmt = stmt.where(ChatMessage.id < before_id)
@@ -367,7 +375,7 @@ async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessa
     stmt = stmt.order_by(desc(ChatMessage.id)).limit(limit)
 
     result = await db.execute(stmt)
-    messages = result.scalars().all()
+    rows = result.all()
 
     return [
         ChatMessageRead(
@@ -375,9 +383,10 @@ async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessa
             room_id=m.room_id,
             author=user_to_public_view(m.author),
             content=m.content,
+            likes_count=l_count, # Map the aggregated count here
             created_at=m.created_at
         )
-        for m in messages
+        for m, l_count in rows
     ]
 
 
@@ -408,6 +417,7 @@ async def send_message(db, user, room_id, payload) -> ChatMessageRead:
         room_id=msg.room_id,
         author=author,
         content=msg.content,
+        likes_count=0, # because its new
         created_at=msg.created_at
     )
 

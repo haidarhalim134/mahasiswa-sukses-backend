@@ -69,6 +69,7 @@ class ChatMessageRead(BaseModel):
     room_id: int
     author: PublicUserView
     content: str
+    likes_count: int
     created_at: datetime
 
 class StudyRoomBase(BaseModel):
