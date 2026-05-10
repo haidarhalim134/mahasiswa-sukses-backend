@@ -19,6 +19,7 @@ async def create_user_profile(
     email: str,
     phone_number: str,
     nim: str,
+    username: str,
     full_name: str,
     birth_date: date,
 ):
@@ -27,6 +28,7 @@ async def create_user_profile(
         email=email,
         phone_number=phone_number,
         nim=nim,
+        user_name=username,
         full_name=full_name,
         birth_date=birth_date,
     )
@@ -58,9 +60,20 @@ async def get_user_by_email(
 
     return result.scalar_one_or_none()
 
+async def get_user_by_username(
+    db: AsyncSession,
+    username: str
+):
+    stmt = select(User).where(User.user_name == username)
+
+    result = await db.execute(stmt)
+
+    return result.scalar_one_or_none()
+
 def user_to_public_view(user: User):
     return PublicUserView(
         id=user.id,
+        username=user.user_name,
         full_name=user.full_name
     )
 
@@ -68,6 +81,7 @@ def user_to_private_view(user: User):
     return UserProfile(
         id=user.id,
         email=user.email,
+        username=user.user_name,
         full_name=user.full_name,
         phone_number=user.phone_number,
         nim=user.nim,
@@ -114,6 +128,14 @@ async def update_profile_data(
                 status_code=409,
                 detail="Email already used"
         )
+    
+    if data.username:
+        username_used = await get_user_by_username(db, data.username)
+        if username_used and username_used.id != user.id:
+            raise HTTPException(
+                status_code=409,
+                detail="Username already used"
+        )
 
     auth_updates = {}
     if data.email and data.email != user.email:
@@ -130,6 +152,11 @@ async def update_profile_data(
     
     # remove password, handled by supabase
     update_data.pop("password", None)
+
+    # TODO: inconsistencies, might rather rename user_name to username
+    if data.username:
+        user.user_name = data.username
+        update_data.pop("username", None)
 
     for key, value in update_data.items():
         setattr(user, key, value)

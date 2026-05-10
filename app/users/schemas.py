@@ -13,6 +13,7 @@ class UserStats(BaseModel):
 class UserProfile(BaseModel):
     id: UUID
     email: str
+    username: Optional[str]
     full_name: Optional[str]
     phone_number: Optional[str]
     nim: Optional[str]
@@ -21,6 +22,7 @@ class UserProfile(BaseModel):
     share_leaderboard_stats: Optional[bool]
 
 class ProfileUpdate(BaseModel):
+    username: Optional[str] = None
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
     phone_number: Optional[str] = None
@@ -34,4 +36,5 @@ class SettingsUpdate(BaseModel):
 
 class PublicUserView(BaseModel):
     id: UUID
+    username: str
     full_name: str

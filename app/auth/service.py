@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.auth.schemas import LoginRequest, LoginResponse, RegisterRequest, TokenRefreshResponse
 from app.core.supabase import supabase
 from app.modules.gamification.services import handle_daily_streak
-from app.users.service import create_user_profile, get_user_by_email, get_user_by_id
+from app.users.service import create_user_profile, get_user_by_email, get_user_by_id, get_user_by_username
 
 
 
@@ -17,6 +17,13 @@ async def register_user(db: AsyncSession, data: RegisterRequest):
         raise HTTPException(
             status_code=409,
             detail="Email already used"
+        )
+
+    username_used = await get_user_by_username(db, data.username)
+    if username_used:
+        raise HTTPException(
+            status_code=409,
+            detail="Username already used"
         )
         
     res = supabase.auth.sign_up(
@@ -36,6 +43,7 @@ async def register_user(db: AsyncSession, data: RegisterRequest):
         email=data.email,
         phone_number=data.phone_number,
         nim=data.nim,
+        username=data.username,
         full_name=data.full_name.strip(),
         birth_date=data.birth_date,
     )
@@ -45,9 +53,20 @@ async def register_user(db: AsyncSession, data: RegisterRequest):
 
 async def login_user(db: AsyncSession, data: LoginRequest):
 
+    email = data.email_or_username
+    # username will not contain @, so in case below assume this function is dealing with username
+    if "@" not in email:
+        user = await get_user_by_username(db, email)
+        if not user:
+            raise HTTPException(
+                status_code=409,
+                detail="Invalid credential"
+            )
+        email = user.email
+
     res = supabase.auth.sign_in_with_password(
         {
-            "email": data.email,
+            "email": email,
             "password": data.password
         }
     )

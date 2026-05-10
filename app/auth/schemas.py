@@ -7,6 +7,7 @@ from app.users.models import User
 
 class RegisterRequest(BaseModel):
     email: EmailStr
+    username: str
     password: str = Field(min_length=8)
     phone_number: str
     nim: str | None = None
@@ -27,9 +28,20 @@ class RegisterRequest(BaseModel):
             raise ValueError("NIM must contain only digits")
         return v
 
+    @field_validator("username")
+    def validate_username(cls, v):
+        v = v.strip()
+        
+        if not v:
+            raise ValueError("Username cannot be empty")
+
+        if not re.match(r"^[a-zA-Z0-9_]+$", v):
+            raise ValueError("Username can only contain letters, numbers, and underscores (no spaces or special characters)")
+            
+        return v
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email_or_username: str
     password: str
 
 class ResetPasswordRequest(BaseModel):
