@@ -45,7 +45,7 @@ class User(Base, table=True):
     )
 
     # unique
-    user_name: Optional[str] = Field(
+    user_name: str = Field(
         default=None,
         unique=True,
         nullable=False
