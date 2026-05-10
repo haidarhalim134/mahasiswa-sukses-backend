@@ -160,6 +160,11 @@ class ChatMessage(Base, table=True):
         }
     )
 
+    replying_to: Optional[int] = Field(
+        default=None,
+        sa_column=Column(Integer, ForeignKey("study_room_messages.id"), primary_key=False, nullable=True)
+    )
+
     content: str = Field(sa_column=Column(String, nullable=False))
 
     created_at: datetime = Field(

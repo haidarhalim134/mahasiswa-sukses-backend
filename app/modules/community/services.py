@@ -10,6 +10,7 @@ from app.modules.community.models import (
     StudyRoom, StudyRoomLike, StudyRoomParticipant, ChatMessage
 )
 from app.modules.community.schemas import (
+    ChatMessageCreate,
     CommunityStats,
     ForumFeedParams,
     ForumPostCreate,
@@ -384,13 +385,14 @@ async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessa
             author=user_to_public_view(m.author),
             content=m.content,
             likes_count=l_count, # Map the aggregated count here
+            replying_to=m.replying_to,
             created_at=m.created_at
         )
         for m, l_count in rows
     ]
 
 
-async def send_message(db, user, room_id, payload) -> ChatMessageRead:
+async def send_message(db, user, room_id, payload: ChatMessageCreate) -> ChatMessageRead:
     await _check_study_room_membership(db, user.id, room_id)
 
     room: StudyRoom = await db.get(StudyRoom, room_id)
@@ -399,6 +401,14 @@ async def send_message(db, user, room_id, payload) -> ChatMessageRead:
             status_code=403,
             detail="Study room is not active"
         )
+
+    if payload.replying_to:
+        earlier_chat: ChatMessage = await db.get(ChatMessage, payload.replying_to)
+        if not earlier_chat or earlier_chat.room_id != room_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Replying to non existing chat or chat from other room."
+            )
 
     msg = ChatMessage(
         room_id=room_id,
@@ -418,6 +428,7 @@ async def send_message(db, user, room_id, payload) -> ChatMessageRead:
         author=author,
         content=msg.content,
         likes_count=0, # because its new
+        replying_to=msg.replying_to,
         created_at=msg.created_at
     )
 

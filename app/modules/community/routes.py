@@ -196,7 +196,7 @@ async def send_chat_message(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Endpoint untuk mengirim pesan ke study room.
+    Endpoint untuk mengirim pesan ke study room, set replying_to = id chat lain di study room yang sama untuk me-reply.
     """
     return await services.send_message(db, current_user, room_id, payload)
 

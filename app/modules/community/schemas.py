@@ -63,6 +63,7 @@ class ForumFeedParams(BaseModel):
 
 class ChatMessageCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=1000)
+    replying_to: Optional[int] = None
 
 class ChatMessageRead(BaseModel):
     id: int
@@ -70,6 +71,7 @@ class ChatMessageRead(BaseModel):
     author: PublicUserView
     content: str
     likes_count: int
+    replying_to: Optional[int] = None
     created_at: datetime
 
 class StudyRoomBase(BaseModel):
