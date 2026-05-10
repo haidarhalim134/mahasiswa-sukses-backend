@@ -15,6 +15,7 @@ import app.modules.progress_tracking.routes as progress_tracking
 import app.modules.quiz.routes as quiz
 import app.modules.certificate.routes as certificate
 import app.modules.task.routes as task
+import app.modules.friends.routes as friends
 
 from app.auth.permissions import get_current_user, require_user
 from app.core.config import settings
