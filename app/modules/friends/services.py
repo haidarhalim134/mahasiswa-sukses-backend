@@ -8,10 +8,10 @@ from fastapi import HTTPException, status
 from app.users.models import User
 from app.modules.friends.models import Friendship
 from app.modules.friends.schemas import FriendshipStatus, FriendSummary
-from app.users.service import get_user_by_email, get_user_by_username
+from app.users.schemas import FriendUserView, PublicUserView
+from app.users.service import get_user_by_email, get_user_by_username, user_to_friend_view, user_to_public_view
 
-
-async def get_friends_list_service(db: AsyncSession, user_id: UUID) -> List[User]:
+async def get_friends_list_service(db: AsyncSession, user_id: UUID) -> List[FriendUserView]:
     stmt = (
         select(User)
         .join(
@@ -24,7 +24,8 @@ async def get_friends_list_service(db: AsyncSession, user_id: UUID) -> List[User
         .where(Friendship.status == FriendshipStatus.ACCEPTED)
     )
     result = await db.execute(stmt)
-    return result.scalars().all()
+
+    return [user_to_friend_view(u) for u in result.scalars().all()]
 
 async def get_friend_summary_service(db: AsyncSession, user_id: UUID) -> dict:
     friend_count = await db.scalar(
@@ -73,14 +74,14 @@ async def send_friend_request_service(db: AsyncSession, requester: User, email_o
     db.add(new_request)
     await db.commit()
 
-async def get_pending_requests_service(db: AsyncSession, user_id: UUID) -> List[User]:
+async def get_pending_requests_service(db: AsyncSession, user_id: UUID) -> List[PublicUserView]:
     stmt = (
         select(User)
         .join(Friendship, Friendship.requester_id == User.id)
         .where(and_(Friendship.requested_id == user_id, Friendship.status == FriendshipStatus.PENDING))
     )
     result = await db.execute(stmt)
-    return result.scalars().all()
+    return [user_to_public_view(u) for u in result.scalars().all()]
 
 async def accept_friend_request_service(db: AsyncSession, user_id: UUID, requester_id: UUID):
     stmt = update(Friendship).where(

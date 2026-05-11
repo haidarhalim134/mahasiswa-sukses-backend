@@ -8,10 +8,6 @@ class FriendshipStatus(str, Enum):
     PENDING = "pending"
     ACCEPTED = "accepted"
 
-class FriendRead(PublicUserView):
-    level: int
-    total_xp: int
-
 class FriendRequest(BaseModel):
     email_or_username: str
 

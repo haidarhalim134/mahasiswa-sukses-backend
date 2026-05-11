@@ -42,3 +42,7 @@ class PublicUserView(BaseModel):
     id: UUID
     username: str
     full_name: str
+
+class FriendUserView(PublicUserView):
+    level: int
+    total_xp: int

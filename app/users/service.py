@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.supabase import get_supabase, supabase
 from app.users.models import User
-from app.users.schemas import ProfileUpdate, PublicUserView, SettingsUpdate, UserProfile
+from app.users.schemas import FriendUserView, ProfileUpdate, PublicUserView, SettingsUpdate, UserProfile
 
 
 async def create_user_profile(
@@ -75,6 +75,15 @@ def user_to_public_view(user: User):
         id=user.id,
         username=user.user_name,
         full_name=user.full_name
+    )
+
+def user_to_friend_view(user: User):
+    return FriendUserView(
+        id=user.id,
+        username=user.user_name,
+        full_name=user.full_name,
+        level=user.level,
+        total_xp=user.total_xp
     )
 
 def user_to_private_view(user: User):

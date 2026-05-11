@@ -6,12 +6,12 @@ from app.auth.permissions import get_current_user
 from app.db.session import get_db
 from app.modules.friends.services import accept_friend_request_service, deny_friend_request_service, get_friend_summary_service, get_friends_list_service, get_pending_requests_service, remove_friend_service, send_friend_request_service
 from app.users.models import User
-from app.modules.friends.schemas import FriendRead, FriendRequest, FriendSummary
-from app.users.schemas import PublicUserView
+from app.modules.friends.schemas import FriendRequest, FriendSummary
+from app.users.schemas import FriendUserView, PublicUserView
 
 router = APIRouter(prefix="/friends", tags=["friends"])
 
-@router.get("/", response_model=list[FriendRead])
+@router.get("/", response_model=list[FriendUserView])
 async def list_friends(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
