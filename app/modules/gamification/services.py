@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import and_, desc, func, or_, select, update
 
+from app.modules.friends.models import Friendship
+from app.modules.friends.schemas import FriendshipStatus
 from app.modules.gamification.gamification import ACHIEVEMENTS, QUESTS
 from app.modules.gamification.models import AchievementHistory, QuestHistory, UserAchievement, UserQuest
 from app.modules.gamification.schemas import (
@@ -21,7 +23,7 @@ from uuid import UUID
 
 from app.users.models import User
 from app.users.schemas import PublicUserView
-from app.users.service import get_user_by_id
+from app.users.service import get_user_by_id, user_to_public_view
 
 
 
@@ -359,10 +361,46 @@ async def generate_leaderboard(
     for idx, u in enumerate(users, start=1):
         leaderboard.append(LeaderboardItem(
             rank=idx,
-            user=PublicUserView(
-                id=u.id,
-                full_name=u.full_name
-            ),
+            user=user_to_public_view(u),
+            xp=u.total_xp,
+            level=u.level
+        ))
+
+    return leaderboard
+
+async def generate_friends_leaderboard(
+    db: AsyncSession,
+    user: User,
+    limit: int = 10
+) -> list[LeaderboardItem]:
+    friends_ids_query = select(Friendship.requester_id).where(
+        and_(Friendship.requested_id == user.id, Friendship.status == FriendshipStatus.ACCEPTED)
+    ).union(
+        select(Friendship.requested_id).where(
+            and_(Friendship.requester_id == user.id, Friendship.status == FriendshipStatus.ACCEPTED)
+        )
+    )
+
+    stmt = (
+        select(User)
+        .where(
+            or_(
+                User.id == user.id,
+                User.id.in_(friends_ids_query)
+            )
+        )
+        .order_by(desc(User.total_xp), User.full_name.asc())
+        .limit(limit)
+    )
+
+    result = await db.execute(stmt)
+    users = result.scalars().all()
+
+    leaderboard: list[LeaderboardItem] = []
+    for idx, u in enumerate(users, start=1):
+        leaderboard.append(LeaderboardItem(
+            rank=idx,
+            user=user_to_public_view(u),
             xp=u.total_xp,
             level=u.level
         ))

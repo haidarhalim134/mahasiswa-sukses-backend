@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.permissions import get_current_user
 from app.db.session import get_db
-from app.modules.gamification.services import generate_leaderboard, get_user_achievements, get_user_history, get_user_quests, get_user_rank, progress_quest
+from app.modules.gamification.services import generate_friends_leaderboard, generate_leaderboard, get_user_achievements, get_user_history, get_user_quests, get_user_rank, progress_quest
 from app.users.models import User
 
 from app.modules.gamification.schemas import (
@@ -81,8 +81,7 @@ async def get_leaderboard(
         user_rank=await get_user_rank(db, current_user.id),
         user_total_xp=current_user.total_xp,
         top_global=await generate_leaderboard(db, current_user, 100),
-        # TODO: no friends feature yet, update later
-        top_friends=[] 
+        top_friends=await generate_friends_leaderboard(db, current_user, 100)
     )
 
 @router.get("/history", response_model=list[HistoryItem])
