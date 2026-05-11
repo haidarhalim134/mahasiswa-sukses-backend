@@ -62,6 +62,11 @@ class User(Base, table=True):
         nullable=False,
     )
 
+    description: str = Field(
+        default=None,
+        nullable=True,
+    )
+
     birth_date: Optional[date] = Field(
         default=None,
         nullable=True,

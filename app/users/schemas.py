@@ -15,6 +15,7 @@ class UserProfile(BaseModel):
     email: str
     username: Optional[str]
     full_name: Optional[str]
+    description: Optional[str] = None
     phone_number: Optional[str]
     nim: Optional[str]
     birth_date: Optional[date]
@@ -26,6 +27,7 @@ class UserProfile(BaseModel):
 class ProfileUpdate(BaseModel):
     username: Optional[str] = None
     full_name: Optional[str] = None
+    description: Optional[str] = None
     email: Optional[EmailStr] = None
     phone_number: Optional[str] = None
     nim: Optional[str] = None

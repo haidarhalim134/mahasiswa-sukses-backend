@@ -83,6 +83,7 @@ def user_to_private_view(user: User):
         email=user.email,
         username=user.user_name,
         full_name=user.full_name,
+        description=user.description,
         phone_number=user.phone_number,
         nim=user.nim,
         birth_date=user.birth_date,
