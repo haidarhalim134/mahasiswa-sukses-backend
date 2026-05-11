@@ -31,6 +31,7 @@ import app.modules.progress_tracking.models
 import app.modules.community.models
 import app.modules.quiz.models
 import app.modules.certificate.models
+import app.modules.friends.models
 
 target_metadata = Base.metadata
 
