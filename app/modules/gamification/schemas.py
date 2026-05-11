@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from enum import Enum
-from typing import Optional, TypedDict
+from typing import Callable, Optional, TypedDict
 from pydantic import BaseModel
 
 from app.modules.quiz.schemas import QuizDifficulty
@@ -24,6 +24,8 @@ class QuestEvent(str, Enum):
     STAY_1_HOUR = "stay_1_hour"
     STAY_10_MIN = "stay_10_min"
     POST_COMMENT = 'post_comment'
+    # post comment on a forum post in 'bantuan' category
+    POST_COMMENT_ON_HELP = 'post_comment_on_help'
 
 class QuestItem(BaseModel):
     # id: int

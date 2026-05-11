@@ -4,10 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.permissions import get_current_user
 from app.db.session import get_db
 from app.modules.community import services
+from app.modules.community.models import ForumPost
 from app.modules.community.schemas import (
     ChatMessageCreate, ChatMessageRead,
     CommentCreate, CommentRead,
-    CommunityStats,
+    CommunityStats, ForumCategory,
     ForumFeedParams,
     ForumPostCreate, ForumPostRead,
     LikeToggleResponse, StudyRoomCreate, StudyRoomRead
@@ -76,6 +77,12 @@ async def comment_on_post(
     # hook
     await progress_quest(db, current_user, QuestEvent.POST_COMMENT)
     await progress_achievement(db, current_user, QuestEvent.POST_COMMENT)
+
+    post: ForumPost | None = await db.get(ForumPost, post_id)
+    if post and post.category == ForumCategory.BANTUAN:
+        # hook
+        await progress_quest(db, current_user, QuestEvent.POST_COMMENT_ON_HELP)
+        await progress_achievement(db, current_user, QuestEvent.POST_COMMENT_ON_HELP)
 
     return comment
 
