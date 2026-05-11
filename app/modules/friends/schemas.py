@@ -13,7 +13,7 @@ class FriendRead(PublicUserView):
     total_xp: int
 
 class FriendRequest(BaseModel):
-    username_or_email: str
+    email_or_username: str
 
 class FriendSummary(BaseModel):
     friend_count: int
