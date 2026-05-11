@@ -12,6 +12,8 @@ from app.modules.community.schemas import (
     ForumPostCreate, ForumPostRead,
     LikeToggleResponse, StudyRoomCreate, StudyRoomRead
 )
+from app.modules.gamification.schemas import QuestEvent
+from app.modules.gamification.services import progress_achievement, progress_quest
 from app.users.models import User
 
 
@@ -68,7 +70,14 @@ async def comment_on_post(
     db: AsyncSession = Depends(get_db),
 ):
     """Endpoint untuk mengomentari sebuah postingan"""
-    return await services.create_comment(db, current_user.id, post_id, payload)
+    comment =  await services.create_comment(db, current_user.id, post_id, payload)
+
+    # TODO: perhaps create helper function later that call both then make sure other calls are updated as well
+    # hook
+    await progress_quest(db, current_user, QuestEvent.POST_COMMENT)
+    await progress_achievement(db, current_user, QuestEvent.POST_COMMENT)
+
+    return comment
 
 
 @router.get("/posts/{post_id}/comments", response_model=list[CommentRead])

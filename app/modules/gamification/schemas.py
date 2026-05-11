@@ -23,6 +23,7 @@ class QuestEvent(str, Enum):
     RECEIVE_LIKE = "receive_like"
     STAY_1_HOUR = "stay_1_hour"
     STAY_10_MIN = "stay_10_min"
+    POST_COMMENT = 'post_comment'
 
 class QuestItem(BaseModel):
     # id: int
