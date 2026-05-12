@@ -351,7 +351,7 @@ async def generate_leaderboard(
 ) -> list[LeaderboardItem]:
     result = await db.execute(
         select(User)
-        .where(or_(User.share_leaderboard_stats == True, User.id == user.id))
+        .where(or_(User.share_leaderboard_stats == True, User.id == user.id), User.total_xp > 0)
         .order_by(desc(User.total_xp), User.full_name.asc())
         .limit(limit)
     )
