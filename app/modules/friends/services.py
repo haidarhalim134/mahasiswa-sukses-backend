@@ -74,14 +74,14 @@ async def send_friend_request_service(db: AsyncSession, requester: User, email_o
     db.add(new_request)
     await db.commit()
 
-async def get_pending_requests_service(db: AsyncSession, user_id: UUID) -> List[PublicUserView]:
+async def get_pending_requests_service(db: AsyncSession, user_id: UUID) -> List[FriendUserView]:
     stmt = (
         select(User)
         .join(Friendship, Friendship.requester_id == User.id)
         .where(and_(Friendship.requested_id == user_id, Friendship.status == FriendshipStatus.PENDING))
     )
     result = await db.execute(stmt)
-    return [user_to_public_view(u) for u in result.scalars().all()]
+    return [user_to_friend_view(u) for u in result.scalars().all()]
 
 async def accept_friend_request_service(db: AsyncSession, user_id: UUID, requester_id: UUID):
     stmt = update(Friendship).where(

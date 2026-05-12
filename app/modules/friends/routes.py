@@ -36,7 +36,7 @@ async def add_friend(
     """Endpoint untuk mengirim permintaan pertemanan"""
     return await send_friend_request_service(db, current_user, payload.email_or_username)
 
-@router.get("/request_list", response_model=list[PublicUserView])
+@router.get("/request_list", response_model=list[FriendUserView])
 async def list_friends_request(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
