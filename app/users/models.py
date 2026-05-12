@@ -1,10 +1,11 @@
 import math
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 from enum import Enum
 
 from sqlalchemy import Column, String, Integer, DateTime
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from app.db.base import Base
@@ -163,3 +164,12 @@ class User(Base, table=True):
         xp_for_next = 100 * (current_lvl ** 2)
         
         return xp_for_next - xp_for_current
+
+    @property
+    def is_online(self):
+        # TODO: potentialy take the online frame and move it into config file, have a look at online estimater on community module as well
+        threshold = datetime.now(timezone.utc) - timedelta(minutes=10)
+
+        if not self.last_seen_at:
+            return False
+        return self.last_seen_at > threshold

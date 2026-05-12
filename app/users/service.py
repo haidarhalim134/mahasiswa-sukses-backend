@@ -83,7 +83,8 @@ def user_to_friend_view(user: User):
         username=user.user_name,
         full_name=user.full_name,
         level=user.level,
-        total_xp=user.total_xp
+        total_xp=user.total_xp,
+        online_status=user.is_online
     )
 
 def user_to_private_view(user: User):
