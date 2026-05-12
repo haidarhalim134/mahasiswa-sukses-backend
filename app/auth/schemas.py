@@ -12,7 +12,7 @@ class RegisterRequest(BaseModel):
     phone_number: str
     nim: str | None = None
     full_name: str
-    birth_date: date
+    birth_date: date | None = None
 
     @field_validator("phone_number")
     def validate_phone(cls, v):
