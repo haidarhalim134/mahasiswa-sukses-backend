@@ -56,6 +56,9 @@ class AchievementSummary(BaseModel):
     current_ranking: int
     current_streak: int
 
+    current_level_xp: int
+    next_level_required_xp_diff : int
+
 class LeaderboardItem(BaseModel):
     user: PublicUserView
     xp: int

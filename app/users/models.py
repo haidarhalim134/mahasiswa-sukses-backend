@@ -128,9 +128,38 @@ class User(Base, table=True):
 
     @property
     def level(self):
-        xp_coeff = 150 
         if self.total_xp <= 0:
             return 1
         
-        calculated_lvl = math.sqrt(self.total_xp / xp_coeff) + 1
+        calculated_lvl = math.sqrt(self.total_xp / 100) + 1
         return math.floor(calculated_lvl)
+
+    # total xp until next levelup
+    @property
+    def xp_to_next_level(self):
+        current_lvl = self.level
+        next_lvl = current_lvl + 1
+        
+        total_xp_needed_for_next = 100 * ((next_lvl - 1) ** 2)
+        
+        return total_xp_needed_for_next - self.total_xp
+
+    # amount of excess extra xp achieved minus xp used for levelling until now, simply every time user level up this value will be 0 again
+    @property
+    def current_level_xp(self):
+        if self.total_xp <= 0:
+            return 0
+        
+        current_lvl = self.level
+        xp_at_start_of_level = 100 * ((current_lvl - 1) ** 2)
+        
+        return self.total_xp - xp_at_start_of_level
+
+    # amount of xp required to move from current level to next
+    @property
+    def xp_required_for_this_milestone(self):
+        current_lvl = self.level
+        xp_for_current = 100 * ((current_lvl - 1) ** 2)
+        xp_for_next = 100 * (current_lvl ** 2)
+        
+        return xp_for_next - xp_for_current

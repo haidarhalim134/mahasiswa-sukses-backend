@@ -65,7 +65,10 @@ async def get_gamification_summary(
         current_level=current_user.level,
         total_xp_earned=current_user.total_xp,
         current_ranking=await get_user_rank(db, current_user.id),
-        current_streak=current_user.current_streak
+        current_streak=current_user.current_streak,
+
+        current_level_xp=current_user.current_level_xp,
+        next_level_required_xp_diff=current_user.xp_required_for_this_milestone
     )
 
 
