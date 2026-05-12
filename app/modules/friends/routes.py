@@ -9,7 +9,7 @@ from app.users.models import User
 from app.modules.friends.schemas import FriendRequest, FriendSummary
 from app.users.schemas import FriendUserView, PublicUserView
 
-router = APIRouter(prefix="/friends", tags=["friends"])
+router = APIRouter(prefix="/api/v1/friends", tags=["friends"])
 
 @router.get("/", response_model=list[FriendUserView])
 async def list_friends(
