@@ -46,4 +46,4 @@ class PublicUserView(BaseModel):
 class FriendUserView(PublicUserView):
     level: int
     total_xp: int
-    online_status: int
+    online_status: bool
