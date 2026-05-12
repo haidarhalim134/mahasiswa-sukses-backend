@@ -70,6 +70,7 @@ class ChatMessageRead(BaseModel):
     room_id: int
     author: PublicUserView
     content: str
+    is_liked: bool = False
     likes_count: int = 0
     reply_count: int = 0
     replying_to: Optional[int] = None

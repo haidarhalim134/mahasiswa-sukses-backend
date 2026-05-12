@@ -367,7 +367,8 @@ async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessa
         select(
             ChatMessage, 
             func.count(RoomChatLike.chat_id).label("likes_count"),
-            func.count(ReplyAlias.id).label("reply_count")
+            func.count(ReplyAlias.id).label("reply_count"),
+            func.bool_or(RoomChatLike.user_id == user_id).label("is_liked")
         )
         .outerjoin(RoomChatLike, ChatMessage.id == RoomChatLike.chat_id)
         .outerjoin(ReplyAlias, ChatMessage.id == ReplyAlias.replying_to)
@@ -389,12 +390,13 @@ async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessa
             room_id=m.room_id,
             author=user_to_public_view(m.author),
             content=m.content,
+            is_liked=is_liked or False,
             likes_count=l_count, 
             reply_count=r_count,
             replying_to=m.replying_to,
             created_at=m.created_at
         )
-        for m, l_count, r_count in rows
+        for m, l_count, r_count, is_liked in rows
     ]
 
 
@@ -433,6 +435,7 @@ async def send_message(db, user, room_id, payload: ChatMessageCreate) -> ChatMes
         room_id=msg.room_id,
         author=author,
         content=msg.content,
+        is_liked=False,
         likes_count=0, # because its new
         reply_count=0,
         replying_to=msg.replying_to,
