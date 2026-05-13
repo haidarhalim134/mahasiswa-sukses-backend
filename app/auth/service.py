@@ -77,7 +77,7 @@ async def login_user(db: AsyncSession, data: LoginRequest):
 
     assert user_data != None
 
-    # HOOK
+    # hook
     await handle_daily_streak(db, user_data)
 
     return LoginResponse(
@@ -108,7 +108,8 @@ def refresh_access_token(refresh_token):
             detail="Invalid refresh token",
         )
 
-    return TokenRefreshResponse(
+    # a bit awkward
+    return session.user.id, TokenRefreshResponse(
         access_token=session.session.access_token,
         refresh_token=session.session.refresh_token,
     )

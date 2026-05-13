@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.schemas import RegisterRequest, LoginRequest, ResetPasswordRequest, LoginResponse, TokenRefreshRequest, TokenRefreshResponse, UpdatePasswordRequest
 from app.auth.service import refresh_access_token, register_user, login_user, reset_password
 from app.db.session import get_db
+from app.modules.gamification.services import handle_daily_streak
+from app.users.models import User
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -79,6 +81,17 @@ async def update_password(data: UpdatePasswordRequest):
     return Response(status_code=200)
 
 @router.post("/refresh-token", response_model=TokenRefreshResponse)
-def refresh_token(data: TokenRefreshRequest):
+async def refresh_token(
+    data: TokenRefreshRequest,
+    db: AsyncSession = Depends(get_db)
+):
     """Endpoint untuk mengambil access token baru"""
-    return refresh_access_token(data.refresh_token)
+    user_id, token_response = refresh_access_token(data.refresh_token)
+
+    user = await db.get(User, user_id)
+    assert user is not None
+
+    # hook
+    await handle_daily_streak(db, user)
+
+    return token_response
