@@ -221,7 +221,7 @@
           targetBtn = row.querySelector(".like-btn");
         }
       });
-      console.log(targetBtn, chatId, parseInt(targetBtn.innerText.replace('❤ ', '')) || 0, payload.eventType)
+
       if (targetBtn) {
         let currentCount = parseInt(targetBtn.innerText.replace('❤ ', '')) || 0;
         
