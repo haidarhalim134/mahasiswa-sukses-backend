@@ -61,7 +61,9 @@ async def create_post(db: AsyncSession, user_id, payload: ForumPostCreate) -> Fo
 
 async def get_post(db: AsyncSession, post_id: int, user_id: UUID) -> ForumPostRead | None:
     result = await db.execute(
-        select(ForumPost).where(ForumPost.id == post_id)
+        select(ForumPost)
+        .where(ForumPost.id == post_id)
+        .order_by(desc(ForumPost.created_at))
     )
     post = result.scalar_one_or_none()
 
@@ -252,7 +254,7 @@ async def create_room(db: AsyncSession, user_id, payload: StudyRoomCreate) -> St
     return await _build_room_response(db, room, user_id)
 
 async def get_room_feed(db: AsyncSession, query: str, user_id: UUID) -> list[StudyRoomRead]:
-    stmt = select(StudyRoom)
+    stmt = select(StudyRoom).order_by(desc(StudyRoom.created_at))
 
     if query:
         query = f"%{query}%"
