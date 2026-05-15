@@ -14,6 +14,20 @@ class RegisterRequest(BaseModel):
     full_name: str
     birth_date: date | None = None
 
+    @field_validator("password")
+    def validate_password_complexity(cls, v):
+        # at least one letter: (?=.*[A-Za-z])
+        # at least one digit: (?=.*\d)
+        # at least one special character: (?=.*[@$!%*#?&])
+        # at least 8 char long: {8,}
+        pattern = r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$"
+        
+        if not re.match(pattern, v):
+            raise ValueError(
+                "Password must contain at least one letter, one number, and one special character"
+            )
+        return v
+
     @field_validator("phone_number")
     def validate_phone(cls, v):
         if not re.match(r"^\+?\d{9,20}$", v):
