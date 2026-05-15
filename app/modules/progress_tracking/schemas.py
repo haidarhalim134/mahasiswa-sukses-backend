@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 from typing import List, Optional
-from datetime import datetime
+from datetime import date, datetime, timedelta, timezone
 
 class TaskCategory(str, Enum):
     AKADEMIK = "akademik"
@@ -27,7 +27,18 @@ class TaskBase(BaseModel):
     description: Optional[str] = None
 
 class TaskCreate(TaskBase):
-    pass
+    @field_validator('deadline')
+    @classmethod
+    def deadline_must_be_in_future(cls, v: datetime) -> datetime:
+        # TODO: hardcoded timezone, not the best solution
+        ICT = timezone(timedelta(hours=7))
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=ICT)
+        
+        now_ict = datetime.now(ICT)
+        if v.date() < now_ict.date():
+            raise ValueError('The deadline cannot be in the past')
+        return v
 
 class TaskRead(TaskBase):
     id: int
