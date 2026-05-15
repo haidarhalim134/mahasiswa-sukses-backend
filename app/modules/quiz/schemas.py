@@ -59,6 +59,7 @@ class QuizResult(BaseModel):
     minimum_score: int
     passed: bool
     points_gained: int
+    streak_count: int
     streak_bonus: int
     certificate_id: Optional[str] = None
 

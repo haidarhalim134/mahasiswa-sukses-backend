@@ -208,6 +208,7 @@ async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission
     points_gained = quiz.xp_reward if passed else 0
 
     streak_bonus = 0
+    streak_count = 0
     if passed:
         stmt = (
             select(QuizAttempt)
@@ -222,13 +223,13 @@ async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission
         result = await db.execute(stmt)
         past_attempts = result.scalars().all()
 
-        quiz_success_streak = 0
+        streak_count = 0
         for past in past_attempts:
             if past.passed:
-                quiz_success_streak += 1
+                streak_count += 1
             else:
                 break
-        streak_bonus = quiz_success_streak * 10
+        streak_bonus = streak_count * 10
 
     attempt.submitted_at = datetime.now(timezone.utc)
     attempt.correct_answers = correct_answers
@@ -250,6 +251,7 @@ async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission
         minimum_score=quiz.minimum_score,
         passed=passed,
         points_gained=points_gained,
+        streak_count=streak_count,
         streak_bonus=streak_bonus,
         certificate_id=attempt.certificate_id,
     )
