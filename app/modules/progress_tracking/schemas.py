@@ -34,6 +34,8 @@ class TaskCreate(TaskBase):
         ICT = timezone(timedelta(hours=7))
         if v.tzinfo is None:
             v = v.replace(tzinfo=ICT)
+        else:
+            v = v.astimezone(ICT)
         
         now_ict = datetime.now(ICT)
         if v.date() < now_ict.date():
