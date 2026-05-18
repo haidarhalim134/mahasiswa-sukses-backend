@@ -19,7 +19,7 @@ class UserProfile(BaseModel):
     phone_number: Optional[str] = None
     nim: Optional[str] = None
     birth_date: Optional[date] = None
-    notifications: Optional[bool]
+    notifications: Optional[bool] = None
     share_leaderboard_stats: Optional[bool] = None
     total_xp: Optional[int] = None
     current_level: Optional[int] = None
