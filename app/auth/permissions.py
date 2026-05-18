@@ -61,8 +61,8 @@ def require_user(
     visibility: Visibility = Visibility.public,
 ):
     def dependency(
-        user_id: Optional[str] = None,
         current_user: Annotated[User, Depends(get_current_user)],  # authn handled here
+        user_id: Optional[str] = None,
     ) -> User:
         if current_user.role == Role.admin:
             return current_user
