@@ -1,4 +1,5 @@
 import os
+import aiofiles
 from pathlib import Path
 from .base_handler import BaseStorage
 
@@ -16,16 +17,17 @@ class LocalStorage(BaseStorage):
         full_path = self._full_path(bucket, path)
         full_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(full_path, "wb") as f:
-            f.write(file.read())
+        file_content = file.read()
+        async with aiofiles.open(full_path, "wb") as f:
+            await f.write(file_content)
 
         return path
 
     async def download(self, bucket: str, path: str) -> bytes:
         full_path = self._full_path(bucket, path)
 
-        with open(full_path, "rb") as f:
-            return f.read()
+        async with aiofiles.open(full_path, "rb") as f:
+            return await f.read()
 
     async def delete(self, bucket: str, path: str) -> None:
         full_path = self._full_path(bucket, path)

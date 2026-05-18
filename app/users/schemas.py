@@ -13,16 +13,16 @@ class UserStats(BaseModel):
 class UserProfile(BaseModel):
     id: UUID
     email: str
-    username: Optional[str]
-    full_name: Optional[str]
+    username: Optional[str] = None
+    full_name: Optional[str] = None
     description: Optional[str] = None
-    phone_number: Optional[str]
-    nim: Optional[str]
-    birth_date: Optional[date]
+    phone_number: Optional[str] = None
+    nim: Optional[str] = None
+    birth_date: Optional[date] = None
     notifications: Optional[bool]
-    share_leaderboard_stats: Optional[bool]
-    total_xp: Optional[int]
-    current_level: Optional[int]
+    share_leaderboard_stats: Optional[bool] = None
+    total_xp: Optional[int] = None
+    current_level: Optional[int] = None
 
 class ProfileUpdate(BaseModel):
     username: Optional[str] = None

@@ -308,7 +308,7 @@ async def handle_daily_streak(db: AsyncSession, user: User):
     if user.last_login_at and user.last_login_at.date() == now:
         return
 
-    updated = await update_login_streak(user)
+    updated = update_login_streak(user)
 
     if updated:
         await progress_quest(db, user, QuestEvent.USER_LOGIN)
@@ -319,7 +319,7 @@ async def handle_daily_streak(db: AsyncSession, user: User):
         db.add(user)
         await db.commit()
 
-async def update_login_streak(user: User):
+def update_login_streak(user: User):
     now = datetime.now(timezone.utc).date()
 
     if user.last_login_at:

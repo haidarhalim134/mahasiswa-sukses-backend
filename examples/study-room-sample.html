@@ -5,7 +5,7 @@
   <title>Community API Tester</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; line-height: 1.6; max-width: 800px; margin: auto; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 800px; margin: auto; }
     input, textarea, button { margin: 5px 0; width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
     button { background-color: #3ecf8e; color: white; border: none; cursor: pointer; font-weight: bold; }
     button:hover { background-color: #34b27b; }
@@ -223,7 +223,7 @@
       });
 
       if (targetBtn) {
-        let currentCount = parseInt(targetBtn.innerText.replace('❤ ', '')) || 0;
+        let currentCount = Number.parseInt(targetBtn.innerText.replace('❤ ', '')) || 0;
         
         if (payload.eventType === 'INSERT') {
           currentCount++;

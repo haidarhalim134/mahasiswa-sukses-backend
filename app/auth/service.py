@@ -88,7 +88,7 @@ async def login_user(db: AsyncSession, data: LoginRequest):
     )
 
 
-async def reset_password(email: str):
+def reset_password(email: str):
 
     supabase.auth.reset_password_for_email(
         email,

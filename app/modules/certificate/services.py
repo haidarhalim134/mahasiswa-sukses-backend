@@ -1,5 +1,6 @@
 from io import BytesIO
 from uuid import UUID, uuid4
+import aiofiles
 from fastapi import HTTPException
 from httpx import HTTPError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,8 +15,8 @@ import asyncio
 # import cairosvg
 
 async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, category: str, source: CertificateSource, source_id: int, template_name: str, replaces: dict):
-    with open(f"app/templates/{template_name}", "r", encoding="utf-8") as f:
-        svg = f.read()
+    async with aiofiles.open(f"app/templates/{template_name}", "r", encoding="utf-8") as f:
+        svg = await f.read()
 
     for key, val in replaces.items():
         svg = svg.replace(key, val)
