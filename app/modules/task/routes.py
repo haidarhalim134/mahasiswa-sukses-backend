@@ -1,3 +1,4 @@
+from typing import Annotated
 from fastapi import APIRouter, Body, Depends, Response, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,8 +14,8 @@ router = APIRouter(prefix="/api/v1/task", tags=["task"], include_in_schema=False
 @router.post("/execute")
 async def execute_task(
     task_token: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
     task_data: TaskData = Body(...),
-    db: AsyncSession = Depends(get_db),
 ):
     if task_token != settings.task_token:
         raise HTTPException(

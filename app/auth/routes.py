@@ -1,3 +1,4 @@
+from typing import Annotated
 from fastapi import APIRouter, Depends, Response, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 @router.post("/register")
 async def register(
     data: RegisterRequest,
-    db: AsyncSession = Depends(get_db)
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     Page: Sign-up.
@@ -27,7 +28,7 @@ async def register(
 @router.post("/login", response_model=LoginResponse)
 async def login(
     data: LoginRequest,
-    db: AsyncSession = Depends(get_db)
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     Page: Sign-in.
@@ -83,7 +84,7 @@ async def update_password(data: UpdatePasswordRequest):
 @router.post("/refresh-token", response_model=TokenRefreshResponse)
 async def refresh_token(
     data: TokenRefreshRequest,
-    db: AsyncSession = Depends(get_db)
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Endpoint untuk mengambil access token baru"""
     user_id, token_response = refresh_access_token(data.refresh_token)

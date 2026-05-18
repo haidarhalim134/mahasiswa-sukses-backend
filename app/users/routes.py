@@ -1,5 +1,6 @@
 import hashlib
 import io
+from typing import Annotated
 from PIL import Image
 from uuid import UUID
 from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile, Depends
@@ -19,7 +20,7 @@ router = APIRouter(prefix="/api/v1/user", tags=["user"])
 
 # @router.get("/stats", response_model=UserStats)
 # async def get_user_stats(
-#     current_user: User = Depends(get_current_user),
+#     current_user: Annotated[User, Depends(get_current_user)],
 # ):
 #     """Endpoint untuk mengambil data stats homescreen"""
 #     raise NotImplementedError
@@ -27,7 +28,7 @@ router = APIRouter(prefix="/api/v1/user", tags=["user"])
 
 @router.get("/profile", response_model=UserProfile)
 async def get_my_profile(
-    current_user: User = Depends(get_current_user),
+    current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Endpoint untuk mengambil data profile user"""
     return user_to_private_view(current_user)
@@ -36,8 +37,8 @@ async def get_my_profile(
 @router.post("/profile", response_model=UserProfile)
 async def update_profile(
     data: ProfileUpdate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Endpoint untuk mengupdate data profile user. Set None/null untuk field yang tidak akan di update"""
     return await update_profile_data(db, current_user, data)
@@ -45,8 +46,8 @@ async def update_profile(
 
 @router.post("/profile/avatar")
 async def upload_avatar(
+    current_user: Annotated[User, Depends(get_current_user)],
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
 ):
     """Endpoint untuk memperbarui avatar user"""
     if not file.content_type or not file.content_type.startswith("image/"):
@@ -88,8 +89,8 @@ async def upload_avatar(
 @router.post("/settings")
 async def update_settings(
     data: SettingsUpdate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Endpoint untuk memperbarui setting profile mahasiswa. Set None/null untuk field yang tidak akan di update"""
     return await update_user_setting(db, current_user.id, data)
@@ -106,7 +107,7 @@ async def update_settings(
 async def get_avatar(
     user_id: UUID, 
     request: Request,
-    db: AsyncSession = Depends(get_db)
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Endpoint untuk mengambil avatar user tertentu"""
     user = await get_user_by_id(db, user_id)

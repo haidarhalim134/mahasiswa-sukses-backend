@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Annotated, List, Optional
 from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -41,8 +41,8 @@ def verify_supabase_token(token: str):
         )
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db),
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
     user_id = verify_supabase_token(token)  # raises 401 on bad token
     current_user = await get_user_by_id(db, UUID(user_id))
@@ -62,7 +62,7 @@ def require_user(
 ):
     def dependency(
         user_id: Optional[str] = None,
-        current_user: User = Depends(get_current_user),  # authn handled here
+        current_user: Annotated[User, Depends(get_current_user)],  # authn handled here
     ) -> User:
         if current_user.role == Role.admin:
             return current_user

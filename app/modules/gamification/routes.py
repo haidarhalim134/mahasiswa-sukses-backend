@@ -1,3 +1,4 @@
+from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,9 +24,9 @@ router = APIRouter(prefix="/api/v1/gamification", tags=["gamification"])
 
 @router.get("/achievement", response_model=list[AchievementItem])
 async def get_achievements(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     achievement_type: AchievementType | None = None,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
 ):
     """Endpoint untuk mengambil achievement mahasiswa berdasarkan tipe"""
     return await get_user_achievements(db, current_user.id, achievement_type)
@@ -33,9 +34,9 @@ async def get_achievements(
 
 @router.get("/quests", response_model=list[QuestItem])
 async def get_quests(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     frequency: QuestFrequency | None = None,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
 ):
     """
     Endpoint untuk mengambil quest berdasarkan frekuensi
@@ -45,8 +46,8 @@ async def get_quests(
 
 @router.get("/summary", response_model=AchievementSummary)
 async def get_gamification_summary(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     Endpoint untuk mengambil rangkuman pencapaian mahasiswa.
@@ -74,8 +75,8 @@ async def get_gamification_summary(
 
 @router.get("/leaderboard", response_model=LeaderboardPage)
 async def get_leaderboard(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     Endpoint untuk mengambil seluruh data page leaderboard mencakup ranking global dan ranking mahasiswa terlogin
@@ -89,8 +90,8 @@ async def get_leaderboard(
 
 @router.get("/history", response_model=list[HistoryItem])
 async def get_history(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
     Endpoint untuk mengambil 50 item terakhir history quest dan achievement terselesaikan
@@ -99,8 +100,8 @@ async def get_history(
 
 @router.post("/heartbeat")
 async def heartbeat(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
     Endpoint untuk progress quest stay di aplikasi dan membantu aplikasi membuat estimasi jumlah user online, panggil setiap 10 menit

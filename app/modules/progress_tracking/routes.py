@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -17,8 +17,8 @@ router = APIRouter(prefix="/api/v1/progress-tracking", tags=["progress tracking"
 
 @router.get("/summary", response_model=TaskSummary)
 async def get_task_summary(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Endpoint untuk mengambil data rangkuman task seperti total task dan total task prioritas tinggi"""
     return await get_task_summary_service(db, current_user.id)
@@ -26,9 +26,9 @@ async def get_task_summary(
 
 @router.get("/tasks", response_model=list[TaskRead])
 async def get_tasks(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     category: Optional[TaskCategory] = None,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
 ):
     """Endpoint untuk mengambil list task mahasiswa"""
     return await get_tasks_service(db, current_user.id, category)
@@ -37,8 +37,8 @@ async def get_tasks(
 @router.post("/tasks", response_model=TaskRead, status_code=201)
 async def create_task(
     task: TaskCreate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Endpoint untuk membuat task baru"""
     return await create_task_service(db, task, current_user.id)
@@ -48,8 +48,8 @@ async def create_task(
 async def update_task_progress(
     task_id: int,
     progress: TaskProgress,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Endpoint untuk memperbarui progress task"""
     task = await db.execute(
@@ -73,8 +73,8 @@ async def update_task_progress(
 @router.delete("/tasks/{task_id}")
 async def delete_task(
     task_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Endpoint untuk menghapus task dari list"""
     return await delete_task_service(db, task_id)
