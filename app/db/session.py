@@ -15,9 +15,9 @@ engine_kwargs = {
 if settings.app_env == "vps":
     engine_kwargs = {
         **engine_kwargs,
-        "pool_size": 5, 
-        "max_overflow": 10,
-        "pool_timeout": 30,
+        "pool_size": 15, 
+        "max_overflow": 5,
+        "pool_timeout": 15,
         "pool_recycle": 1800,
         "pool_pre_ping": True
     }
