@@ -40,14 +40,23 @@ def verify_supabase_token(token: str):
             detail="Invalid authentication token",
         )
 
+# faster
+async def get_current_user_id(
+    token: Annotated[str, Depends(oauth2_scheme)]
+) -> UUID:
+    user_id_str = verify_supabase_token(token)  
+    return UUID(user_id_str)
+
 async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
-    user_id = verify_supabase_token(token)  # raises 401 on bad token
-    current_user = await get_user_by_id(db, UUID(user_id))
+    current_user = await get_user_by_id(db, user_id)
     if not current_user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="User not found"
+        )
 
     # HOOK
     await handle_daily_streak(db, current_user)

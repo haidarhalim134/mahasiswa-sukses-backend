@@ -7,7 +7,7 @@ from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFil
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.permissions import get_current_user
+from app.auth.permissions import get_current_user, get_current_user_id
 from app.core.storage_handler import Buckets, get_storage
 from app.db.session import get_db
 from app.users.models import User
@@ -89,11 +89,11 @@ async def upload_avatar(
 @router.post("/settings")
 async def update_settings(
     data: SettingsUpdate,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Endpoint untuk memperbarui setting profile mahasiswa. Set None/null untuk field yang tidak akan di update"""
-    return await update_user_setting(db, current_user.id, data)
+    return await update_user_setting(db, current_user_id, data)
 
 @router.get(
     "/avatar/{user_id}",

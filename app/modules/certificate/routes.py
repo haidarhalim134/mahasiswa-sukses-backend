@@ -1,10 +1,11 @@
 
 from typing import Annotated
+from uuid import UUID
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.permissions import get_current_user
+from app.auth.permissions import get_current_user, get_current_user_id
 from app.db.session import get_db
 from app.modules.certificate.schemas import CertificateItem
 from app.modules.certificate.services import download, get_user_certificate
@@ -15,13 +16,13 @@ router = APIRouter(prefix="/api/v1/certificate", tags=["certificate"])
 
 @router.get("/list", response_model=list[CertificateItem])
 async def list_earned_certificate(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[AsyncSession, Depends(get_db)]
     ):
     """
     Endpoint untuk melihat list sertifikat yang bisa diunduh user terlogin
     """
-    return await get_user_certificate(db, current_user.id)
+    return await get_user_certificate(db, current_user_id)
 
 @router.get(
     "/{certificate_id}", 
@@ -35,11 +36,11 @@ async def list_earned_certificate(
 )
 async def download_certificate(
     certificate_id: str,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[AsyncSession, Depends(get_db)]
     ):
     """
     Endpoint untuk mengunduh file sertifikat tertentu
     """
-    file = await download(db, current_user.id, certificate_id)
+    file = await download(db, current_user_id, certificate_id)
     return Response(content=file)

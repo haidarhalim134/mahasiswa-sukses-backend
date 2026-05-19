@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from sqlalchemy import Case
 from sqlalchemy.engine.result import Result
 from typing import Any, Optional
 from datetime import datetime, timezone
@@ -189,6 +190,26 @@ async def get_user_quests(
         items.append(item)
 
     return items
+
+async def get_user_quest_stats(db: AsyncSession, user_id: UUID) -> tuple[int, int]:
+    stmt = (
+        select(
+            func.count(UserQuest.id).label("total"),
+            func.sum(Case((UserQuest.is_completed == True, 1), else_=0)).label("completed")
+        )
+        .where(
+            UserQuest.user_id == user_id,
+            UserQuest.frequency.in_([QuestFrequency.DAILY, QuestFrequency.WEEKLY])
+        )
+    )
+    
+    result = await db.execute(stmt)
+    row = result.fetchone()
+    
+    total_tracked = row.total if row and row.total else 0
+    total_completed = row.completed if row and row.completed else 0
+    
+    return total_tracked, total_completed
 
 ## achievement
 async def progress_achievement(
@@ -407,17 +428,13 @@ async def generate_friends_leaderboard(
 
     return leaderboard
 
-async def get_user_rank(db: AsyncSession, user_id: UUID) -> int:
-    user = await get_user_by_id(db, user_id)
-
-    if user is None:
-        raise ValueError("User not found")
+async def get_user_rank(db: AsyncSession, user: User) -> int:
 
     result = await db.execute(
         select(func.count())
         .select_from(User)
         .where(
-            or_(User.share_leaderboard_stats == True, User.id == user_id),
+            or_(User.share_leaderboard_stats == True, User.id == user.id),
             or_(
                 User.total_xp > user.total_xp,
                 # same xp, ordered first due to name

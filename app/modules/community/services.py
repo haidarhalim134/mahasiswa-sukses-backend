@@ -56,25 +56,25 @@ async def create_post(db: AsyncSession, user_id, payload: ForumPostCreate) -> Fo
     await db.commit()
     await db.refresh(post)
 
-    return await _build_post_response(db, post, user_id)
+    return _build_post_response(post, 0, 0, False)
 
 
 async def get_post(db: AsyncSession, post_id: int, user_id: UUID) -> ForumPostRead | None:
     result = await db.execute(
-        select(ForumPost)
+        get_post_with_stats_stmt(user_id)
         .where(ForumPost.id == post_id)
         .order_by(desc(ForumPost.created_at))
     )
-    post = result.scalar_one_or_none()
+    row = result.first()
 
-    if not post:
+    if not row:
         return None
 
-    return await _build_post_response(db, post, user_id)
+    return _build_post_response(*row)
 
 
 async def get_forum_feed(db: AsyncSession, params: ForumFeedParams, user_id: UUID) -> list[ForumPostRead]:
-    stmt = select(ForumPost).order_by(desc(ForumPost.created_at))
+    stmt = get_post_with_stats_stmt(user_id).order_by(desc(ForumPost.created_at))
 
     if params.tag:
         stmt = stmt.where(cast(ForumPost.tags, String).contains(params.tag))
@@ -85,31 +85,35 @@ async def get_forum_feed(db: AsyncSession, params: ForumFeedParams, user_id: UUI
     stmt = stmt.offset(params.offset).limit(params.limit)
 
     result = await db.execute(stmt)
-    posts = result.scalars().all()
+    rows = result.all()
 
     return [
-        await _build_post_response(db, post, user_id)
-        for post in posts
+        _build_post_response(*row)
+        for row in rows
     ]
 
+# no longer syncronous
+def get_post_with_stats_stmt(user_id: UUID):
+    likes_subq = select(func.count()).where(
+        PostLike.post_id == ForumPost.id, PostLike.like == True
+    ).correlate(ForumPost).scalar_subquery()
 
-async def _build_post_response(db, post: ForumPost, user_id) -> ForumPostRead:
-    likes_count = await db.scalar(
-        select(func.count()).where(PostLike.post_id == post.id, PostLike.like == True)
+    comments_subq = select(func.count()).where(
+        Comment.post_id == ForumPost.id
+    ).correlate(ForumPost).scalar_subquery()
+
+    is_liked_subq = select(func.count() > 0).where(
+        PostLike.post_id == ForumPost.id, PostLike.user_id == user_id, PostLike.like == True
+    ).correlate(ForumPost).scalar_subquery()
+
+    return select(
+        ForumPost,
+        likes_subq.label("likes_count"),
+        comments_subq.label("comments_count"),
+        is_liked_subq.label("is_liked")
     )
 
-    comments_count = await db.scalar(
-        select(func.count()).where(Comment.post_id == post.id)
-    )
-
-    is_liked = await db.scalar(
-        select(func.count()).where(
-            PostLike.post_id == post.id,
-            PostLike.user_id == user_id,
-            PostLike.like == True
-        )
-    )
-
+def _build_post_response(post: ForumPost, likes_count, comments_count, is_liked):
     return ForumPostRead(
         id=post.id,
         title=post.title,
@@ -122,7 +126,6 @@ async def _build_post_response(db, post: ForumPost, user_id) -> ForumPostRead:
         comments_count=comments_count or 0,
         is_liked=bool(is_liked),
     )
-
 
 ## comments
 async def create_comment(db, user_id, post_id, payload) -> CommentRead:

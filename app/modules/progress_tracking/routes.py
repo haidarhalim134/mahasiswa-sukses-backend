@@ -1,9 +1,10 @@
 from typing import Annotated, Optional
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from app.auth.permissions import get_current_user
+from app.auth.permissions import get_current_user, get_current_user_id
 from app.db.session import get_db
 from app.modules.gamification.schemas import QuestEvent
 from app.modules.gamification.services import progress_achievement, progress_quest
@@ -17,31 +18,31 @@ router = APIRouter(prefix="/api/v1/progress-tracking", tags=["progress tracking"
 
 @router.get("/summary", response_model=TaskSummary)
 async def get_task_summary(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Endpoint untuk mengambil data rangkuman task seperti total task dan total task prioritas tinggi"""
-    return await get_task_summary_service(db, current_user.id)
+    return await get_task_summary_service(db, current_user_id)
 
 
 @router.get("/tasks", response_model=list[TaskRead])
 async def get_tasks(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
     category: Optional[TaskCategory] = None,
 ):
     """Endpoint untuk mengambil list task mahasiswa"""
-    return await get_tasks_service(db, current_user.id, category)
+    return await get_tasks_service(db, current_user_id, category)
 
 
 @router.post("/tasks", response_model=TaskRead, status_code=201)
 async def create_task(
     task: TaskCreate,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Endpoint untuk membuat task baru"""
-    return await create_task_service(db, task, current_user.id)
+    return await create_task_service(db, task, current_user_id)
 
 
 @router.post("/tasks/{task_id}/update_progress/{progress}")

@@ -4,21 +4,28 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 from app.core.config import settings
 
-# Configuration logic based on environment
 engine_kwargs = {
     "future": True,
+    "connect_args": {
+        "prepared_statement_cache_size": 0,
+        "statement_cache_size": 0,
+    }
 }
 
-if settings.app_env == "serverless":
-    # Serverless (Vercel) Optimization:
-    # No local pooling (let Supavisor handle it) and disable statement cache
+if settings.app_env == "vps":
+    engine_kwargs = {
+        **engine_kwargs,
+        "pool_size": 5, 
+        "max_overflow": 10,
+        "pool_timeout": 30,
+        "pool_recycle": 1800,
+        "pool_pre_ping": True
+    }
+elif settings.app_env == "serverless":
+    # quick hit and go connection
     engine_kwargs = ({
         **engine_kwargs,
         "poolclass": NullPool,
-        "connect_args": {
-            "prepared_statement_cache_size": 0,
-            "statement_cache_size": 0,
-        }
     })
 
 engine = create_async_engine(
