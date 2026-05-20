@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID
 
@@ -11,11 +11,13 @@ from app.modules.gamification.services import progress_achievement, progress_que
 from app.modules.progress_tracking.models import Task
 from app.modules.progress_tracking.schemas import TaskCreate, TaskProgress, TaskCategory, TaskPriority
 
-
+# maybe combine later into a before validator pydantic function so the data will just be standardized by default
+ICT = timezone(timedelta(hours=7))
 def to_utc(dt: datetime) -> datetime:
     """Ensure datetime is stored in UTC"""
+    # assume indonesian timezone instead if none (telkom univ application)
     if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
+        return dt.replace(tzinfo=ICT)
     return dt.astimezone(timezone.utc)
 
 
