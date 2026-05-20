@@ -179,6 +179,8 @@ async def toggle_post_like(db: AsyncSession, user, post_id) -> LikeToggleRespons
     existing = result.scalar_one_or_none()
 
     if existing:
+        is_liked = not existing.like
+        
         await db.execute(
             update(PostLike)
             .where(
@@ -189,7 +191,6 @@ async def toggle_post_like(db: AsyncSession, user, post_id) -> LikeToggleRespons
                 like=not existing.like
             )
         )
-        is_liked = not existing.like
     else:
         db.add(PostLike(post_id=post_id, user_id=user_id))
         is_liked = True
