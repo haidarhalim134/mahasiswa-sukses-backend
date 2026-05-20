@@ -41,7 +41,7 @@ def verify_supabase_token(token: str):
         )
 
 # faster
-async def get_current_user_id(
+def get_current_user_id(
     token: Annotated[str, Depends(oauth2_scheme)]
 ) -> UUID:
     user_id_str = verify_supabase_token(token)  
