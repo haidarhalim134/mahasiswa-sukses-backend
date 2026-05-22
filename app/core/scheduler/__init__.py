@@ -20,7 +20,8 @@ def get_scheduler() -> BaseScheduler:
     assert base_url != None
     base_url+= "/api/v1/task/execute"
 
-    if settings.app_env == "serverless":
+    # TODO: always true for now until migration
+    if settings.app_env == "serverless" or True:
         from .qstash_scheduler import QStashScheduler
         return QStashScheduler(base_url)
 
