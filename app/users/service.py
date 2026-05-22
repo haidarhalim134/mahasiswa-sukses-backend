@@ -114,18 +114,22 @@ async def update_last_seen(
     )
     await db.commit()
 
+def get_online_users_count_stmt(
+    db: AsyncSession,
+    window_minutes: int = 10,
+):
+    threshold = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
+    
+    return select(func.count()).where(
+        User.last_seen_at != None,
+        User.last_seen_at > threshold
+    )
+
 async def get_online_users_count(
     db: AsyncSession,
     window_minutes: int = 10,
 ) -> int:
-    threshold = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
-
-    result = await db.scalar(
-        select(func.count()).where(
-            User.last_seen_at != None,
-            User.last_seen_at > threshold
-        )
-    )
+    result = await db.scalar(get_online_users_count_stmt(db, window_minutes))
 
     return result or 0
 

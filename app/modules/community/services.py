@@ -25,19 +25,26 @@ from app.modules.community.schemas import (
 from app.modules.gamification.schemas import QuestEvent
 from app.modules.gamification.services import progress_quest
 from app.users.schemas import PublicUserView
-from app.users.service import get_online_users_count, get_user_by_id, user_to_public_view
+from app.users.service import get_online_users_count, get_online_users_count_stmt, get_user_by_id, user_to_public_view
 
 
 ## stats
 async def get_stats(db: AsyncSession) -> CommunityStats:
-    active_rooms_count = await db.scalar(
-        select(func.count()).where(
-            StudyRoom.is_active == True
-        )
+    online_count_subquery = get_online_users_count_stmt(db).scalar_subquery()
+    rooms_count_subquery = (
+        select(func.count())
+        .where(StudyRoom.is_active == True)
+        .scalar_subquery()
     )
 
+    result = await db.execute(
+        select(online_count_subquery, rooms_count_subquery)
+    )
+
+    online_count, active_rooms_count = result.tuples().one()
+
     return CommunityStats(
-        online_count=await get_online_users_count(db),
+        online_count=online_count or 0,
         active_rooms_count=active_rooms_count or 0
     )
 
