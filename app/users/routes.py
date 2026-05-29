@@ -49,7 +49,7 @@ async def upload_avatar(
     current_user: Annotated[User, Depends(get_current_user)],
     file: UploadFile = File(...),
 ):
-    """Endpoint untuk memperbarui avatar user"""
+    """Endpoint untuk memperbarui avatar user. Menerima berbagai format gambar (`*.jpeg`, `*.png`, `*.webp`, dll.)"""
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(400, "File must be an image")
 

@@ -86,17 +86,29 @@ def upgrade() -> None:
         ALTER TABLE study_room_messages ENABLE ROW LEVEL SECURITY;
     """)
     op.execute("""
-        CREATE POLICY "only study room members can read messages"
-        ON study_room_messages
-        FOR SELECT
-        USING (
-            EXISTS (
-                SELECT 1
-                FROM study_room_participants m
-                WHERE m.room_id = study_room_messages.room_id
-                  AND m.user_id = auth.uid()
-            )
-        );
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1 
+                FROM pg_proc p 
+                JOIN pg_namespace n ON p.pronamespace = n.oid 
+                WHERE n.nspname = 'auth' AND p.proname = 'uid'
+            ) THEN
+                CREATE POLICY "only study room members can read messages"
+                ON study_room_messages
+                FOR SELECT
+                USING (
+                    EXISTS (
+                        SELECT 1
+                        FROM study_room_participants m
+                        WHERE m.room_id = study_room_messages.room_id
+                          AND m.user_id = auth.uid()
+                    )
+                );
+            ELSE
+                RAISE NOTICE 'Non supabase db, skipping rls policy creation';
+            END IF;
+        END $$;
     """)
     # ### end Alembic commands ###
 
