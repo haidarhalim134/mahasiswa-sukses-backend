@@ -97,7 +97,7 @@ def reset_password(email: str):
     supabase.auth.reset_password_for_email(
         email,
         {
-            "redirect_to": "http://localhost:8000/api/v1/auth/reset-password-page"
+            "redirect_to": "https://mahasiswa-sukses-backend.vercel.app/api/v1/auth/reset-password-page"
         }
     )
 
