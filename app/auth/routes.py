@@ -45,7 +45,7 @@ async def reset_password_endpoint(
     Page: Reset Password Request.
     Endpoint untuk meminta link reset password yang akan dikirim melalui email.
     """
-    await reset_password(data.email)
+    reset_password(data.email)
     return Response(status_code=200)
 
 from fastapi.responses import FileResponse, HTMLResponse

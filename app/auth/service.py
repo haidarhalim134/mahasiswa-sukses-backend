@@ -60,7 +60,7 @@ async def login_user(db: AsyncSession, data: LoginRequest):
         if not user:
             raise HTTPException(
                 status_code=409,
-                detail="Invalid credential"
+                detail="Invalid credential format"
             )
         email = user.email
 
@@ -71,7 +71,11 @@ async def login_user(db: AsyncSession, data: LoginRequest):
         }
     )
 
-    assert res.session != None
+    if not res.session:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credential",
+        )
 
     user_data = await get_user_by_id(db, UUID(res.session.user.id))
 
