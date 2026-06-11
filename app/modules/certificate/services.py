@@ -22,7 +22,11 @@ async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, c
         svg = svg.replace(key, val)
 
     # TODO: move to hybrid vps and vercel deployment handler as well maybe?
-    async with httpx.AsyncClient() as client:
+    file = None
+
+    try:
+        raise
+        async with httpx.AsyncClient() as client:
             headers = {"Authorization": f"Bearer {settings.cloudconvert_api_key}"}
             
             payload = {
@@ -64,6 +68,26 @@ async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, c
             download_res = await client.get(pdf_url)
             download_res.raise_for_status()
             file = BytesIO(download_res.content)
+
+    except Exception as e:
+        try:
+            async with httpx.AsyncClient() as client:
+                FALLBACK_URL = "https://serv.gorgon-everest.ts.net/convert" 
+                
+                fallback_payload = {
+                    "svg_string": svg,
+                    "secret_token": settings.qstash_token
+                }
+                
+                # Give it a generous timeout (e.g., 30 seconds) in case of a heavy SVG
+                response = await client.post(FALLBACK_URL, json=fallback_payload, timeout=30.0)
+                response.raise_for_status()
+                
+                file = BytesIO(response.content)
+                
+        except Exception as fallback_error:
+            # Both primary and fallback failed
+            raise Exception("Certificate generation completely failed. Both services are down.") from fallback_error
 
     storage = get_storage()
 
