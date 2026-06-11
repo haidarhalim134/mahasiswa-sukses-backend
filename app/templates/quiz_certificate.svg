@@ -35,7 +35,17 @@ text {
   letter-spacing="0.02em">
   {tanggal_selesai}
 </text>
-<text fill="black" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="80" letter-spacing="0em"><tspan x="702.305" y="1604.54">Atas keberhasilan menyelesaikan kuis "{nama_kuis}" </tspan></text>
+<text 
+  x="1650" 
+  y="1560" 
+  text-anchor="middle" 
+  fill="black" 
+  font-family="Inter" 
+  font-size="80" 
+  letter-spacing="0em">
+  <tspan x="1650" dy="0">Atas keberhasilan menyelesaikan kuis</tspan>
+  <tspan x="1650" dy="110">"{nama_kuis}"</tspan>
+</text>
 <line x1="450" y1="1451" x2="2850" y2="1451" stroke="#314E85" stroke-width="2"/>
 <text 
   x="1650" 

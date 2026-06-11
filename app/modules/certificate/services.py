@@ -25,7 +25,6 @@ async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, c
     file = None
 
     try:
-        raise
         async with httpx.AsyncClient() as client:
             headers = {"Authorization": f"Bearer {settings.cloudconvert_api_key}"}
             
@@ -79,14 +78,12 @@ async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, c
                     "secret_token": settings.qstash_token
                 }
                 
-                # Give it a generous timeout (e.g., 30 seconds) in case of a heavy SVG
                 response = await client.post(FALLBACK_URL, json=fallback_payload, timeout=30.0)
                 response.raise_for_status()
                 
                 file = BytesIO(response.content)
                 
         except Exception as fallback_error:
-            # Both primary and fallback failed
             raise Exception("Certificate generation completely failed. Both services are down.") from fallback_error
 
     storage = get_storage()
