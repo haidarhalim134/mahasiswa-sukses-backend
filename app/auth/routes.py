@@ -2,6 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+from supabase import AuthApiError
 
 from app.auth.schemas import RegisterRequest, LoginRequest, ResetPasswordRequest, LoginResponse, TokenRefreshRequest, TokenRefreshResponse, UpdatePasswordRequest
 from app.auth.service import refresh_access_token, register_user, login_user, reset_password
@@ -68,6 +69,16 @@ async def update_password(data: UpdatePasswordRequest):
         supabase.auth.set_session(
             data.access_token,
             data.access_token
+        )
+    except AuthApiError as exp:
+        if "New password should be different" in exp.message:
+            detail_msg = "New password should be different from the old password."
+        else:
+            detail_msg = "Failed to update password. Please try again."
+            
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail_msg
         )
     except:
         raise HTTPException(
