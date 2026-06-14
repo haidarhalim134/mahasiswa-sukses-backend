@@ -321,38 +321,58 @@ async def _build_room_response(db, room: StudyRoom, user_id) -> StudyRoomRead:
         max_participants=room.max_participants
     )
 
-async def join_room(db: AsyncSession, user_id, room_id) -> StudyRoomRead:
-    room = await db.get(StudyRoom, room_id)
+async def join_room(db: AsyncSession, user_id: int, room_id: int) -> StudyRoomRead:
+    room_query = (
+        select(StudyRoom)
+        .where(StudyRoom.id == room_id)
+        .with_for_update() 
+    )
+    result = await db.execute(room_query)
+    room = result.scalar_one_or_none()
+    
     if not room:
         raise HTTPException(
             status_code=404,
             detail="Study room not found"
         )
 
-    # TODO: handle potential race condition
+    participant_check = await db.execute(
+        select(StudyRoomParticipant).where(
+            StudyRoomParticipant.room_id == room_id,
+            StudyRoomParticipant.user_id == user_id
+        )
+    )
+    existing_participant = participant_check.scalar_one_or_none()
+    
+    if existing_participant:
+        return await _build_room_response(db, room, user_id)
+
     current_participant_count = await db.scalar(
         select(func.count()).where(StudyRoomParticipant.room_id == room_id)
     )
-    if current_participant_count and current_participant_count >= room.max_participants:
+    
+    if current_participant_count >= room.max_participants:
         raise HTTPException(
             status_code=403,
             detail="Room is full"
         )
-    result = await db.execute(
-        select(StudyRoomParticipant).where(
-            StudyRoomParticipant.room_id == room_id,
-            StudyRoomParticipant.user_id == user_id
-        ).limit(1)
-    )
-    obj = result.scalar_one_or_none()
-    if not obj:
-        participant = StudyRoomParticipant(
-            room_id=room_id,
-            user_id=user_id
-        )
-        db.add(participant)
-        await db.commit()
 
+    new_participant = StudyRoomParticipant(
+        room_id=room_id,
+        user_id=user_id
+    )
+    db.add(new_participant)
+    
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail="An error occurred while joining the room. Please try again."
+        )
+
+    await db.refresh(room)
     return await _build_room_response(db, room, user_id)
 
 
