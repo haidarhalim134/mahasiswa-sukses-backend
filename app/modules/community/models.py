@@ -36,6 +36,11 @@ class ForumPost(Base, table=True):
     # simple comma-separated tags
     tags: Optional[str] = Field(default="", sa_column=Column(String))
 
+    deleted: bool = Field(
+        default=False,
+        sa_column=Column(Boolean, nullable=False, server_default="false")
+    )
+
     created_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), nullable=False)
     )
@@ -111,6 +116,11 @@ class StudyRoom(Base, table=True):
     is_active: bool = Field(
         default=True,
         sa_column=Column(Boolean, nullable=False, server_default="true")
+    )
+
+    deleted: bool = Field(
+        default=False,
+        sa_column=Column(Boolean, nullable=False, server_default="false")
     )
 
     created_at: datetime = Field(

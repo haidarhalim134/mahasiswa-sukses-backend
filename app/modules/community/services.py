@@ -81,7 +81,7 @@ async def get_post(db: AsyncSession, post_id: int, user_id: UUID) -> ForumPostRe
 
 
 async def get_forum_feed(db: AsyncSession, params: ForumFeedParams, user_id: UUID) -> list[ForumPostRead]:
-    stmt = get_post_with_stats_stmt(user_id).order_by(desc(ForumPost.created_at))
+    stmt = get_post_with_stats_stmt(user_id).order_by(desc(ForumPost.created_at)).where(ForumPost.deleted == False)
 
     if params.tag:
         stmt = stmt.where(cast(ForumPost.tags, String).contains(params.tag))
@@ -265,7 +265,7 @@ async def create_room(db: AsyncSession, user_id, payload: StudyRoomCreate) -> St
     return await _build_room_response(db, room, user_id)
 
 async def get_room_feed(db: AsyncSession, query: str, user_id: UUID) -> list[StudyRoomRead]:
-    stmt = select(StudyRoom).order_by(desc(StudyRoom.created_at))
+    stmt = select(StudyRoom).where(StudyRoom.deleted == False).order_by(desc(StudyRoom.created_at))
 
     if query:
         query = f"%{query}%"
