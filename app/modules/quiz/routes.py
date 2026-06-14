@@ -55,7 +55,7 @@ async def submit_quiz(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
-    """Endpoint untuk mengirim quiz selesai, answer dikirim dalam bentuk dictionary dengan key adalah id pertanyaan dan value adalah pilihan jawaban (a, b, c, atau d)"""
+    """Endpoint untuk mengirim quiz selesai, answer dikirim dalam bentuk dictionary dengan key adalah id pertanyaan dan value adalah pilihan jawaban (a, b, c, atau d). Jika hasilnya melampaui batas minimal (passed), endpoint /{quiz_id}/certificate bisa dipanggil untuk membuat serifikat tersedia untuk di unduh"""
     return await submit_quiz_service(db, quiz_id, submission, current_user)
 
 
