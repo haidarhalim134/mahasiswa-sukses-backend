@@ -53,6 +53,14 @@ async def create_post(
     """Endpoint untuk membuat post baru, menerima tag dalam bentuk comma separated string 'tag1,tag2,tag3' """
     return await services.create_post(db, current_user_id, post)
 
+@router.delete("/posts/{post_id}")
+async def delete_post(
+    post_id: int,
+    current_user_id: Annotated[UUID, Depends(get_current_user_id)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Endpoint untuk menghapus sebuah post"""
+    await services.delete_post(db, current_user_id, post_id)
 
 @router.get("/posts/{post_id}", response_model=ForumPostRead)
 async def get_post_detail(
@@ -128,6 +136,15 @@ async def create_room(
 ):
     """Endpoint untuk membuat room baru"""
     return await services.create_room(db, current_user_id, room)
+
+@router.delete("/room/{room_id}")
+async def delete_room(
+    room_id: int,
+    current_user_id: Annotated[UUID, Depends(get_current_user_id)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Endpoint untuk menghapus sebuah room"""
+    await services.delete_room(db, current_user_id, room_id)
 
 @router.post("/room/{room_id}/like", response_model=LikeToggleResponse)
 async def toggle_room_like(

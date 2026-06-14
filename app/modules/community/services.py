@@ -65,6 +65,33 @@ async def create_post(db: AsyncSession, user_id, payload: ForumPostCreate) -> Fo
 
     return _build_post_response(post, 0, 0, False)
 
+async def delete_post(
+        db: AsyncSession, 
+        user_id: UUID,
+        post_id: int
+    ):
+    post = await db.execute(
+        select(ForumPost)
+        .where(ForumPost.id == post_id, ForumPost.author_id == user_id)
+        .limit(1)
+    )
+    post = post.scalar_one_or_none()
+    if not post:
+        raise HTTPException(
+            status_code=403,
+            detail="Can only delete your own post or post does not exist."
+        )
+
+    await db.execute(
+        update(ForumPost)
+        .where(ForumPost.id == post_id)
+        .values(
+            deleted=True
+        )
+    )
+        
+    await db.commit()
+
 
 async def get_post(db: AsyncSession, post_id: int, user_id: UUID) -> ForumPostRead | None:
     result = await db.execute(
@@ -263,6 +290,33 @@ async def create_room(db: AsyncSession, user_id, payload: StudyRoomCreate) -> St
     await db.refresh(room)
 
     return await _build_room_response(db, room, user_id)
+
+async def delete_room(
+        db: AsyncSession, 
+        user_id: UUID,
+        room_id: int
+    ):
+    room = await db.execute(
+        select(StudyRoom)
+        .where(StudyRoom.id == room_id, StudyRoom.author_id == user_id)
+        .limit(1)
+    )
+    room = room.scalar_one_or_none()
+    if not room:
+        raise HTTPException(
+            status_code=403,
+            detail="Can only delete your own post or post does not exist."
+        )
+
+    await db.execute(
+        update(StudyRoom)
+        .where(StudyRoom.id == room_id)
+        .values(
+            deleted=True
+        )
+    )
+        
+    await db.commit()
 
 async def get_room_feed(db: AsyncSession, query: str, user_id: UUID) -> list[StudyRoomRead]:
     stmt = select(StudyRoom).where(StudyRoom.deleted == False).order_by(desc(StudyRoom.created_at))
