@@ -17,7 +17,7 @@ QUESTS: list[QuestDef] = [
     {
         "id": "daily_stay_1hour",
         "title": "Fokus belajar selama 1 jam",
-        "description": "Tetap di apliksi selama 1 jam",
+        "description": "Tetap di aplikasi selama 1 jam",
         "event": QuestEvent.STAY_1_HOUR,
         "target": 1,
         "difficulty": QuizDifficulty.MEDIUM,
