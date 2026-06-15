@@ -32,6 +32,7 @@ import app.modules.community.models
 import app.modules.quiz.models
 import app.modules.certificate.models
 import app.modules.friends.models
+import app.modules.logging.models
 
 target_metadata = Base.metadata
 

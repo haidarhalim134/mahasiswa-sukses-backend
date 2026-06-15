@@ -1,6 +1,6 @@
 from typing import Annotated, List, Optional
 from uuid import UUID
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,9 +42,13 @@ def verify_supabase_token(token: str):
 
 # faster
 def get_current_user_id(
+    request: Request,
     token: Annotated[str, Security(oauth2_scheme)]
 ) -> UUID:
     user_id_str = verify_supabase_token(token)  
+
+    request.state.current_user_id = UUID(user_id_str)
+
     return UUID(user_id_str)
 
 async def get_current_user(
