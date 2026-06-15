@@ -73,6 +73,8 @@ async def update_password(data: UpdatePasswordRequest):
     except AuthApiError as exp:
         if "New password should be different" in exp.message:
             detail_msg = "New password should be different from the old password."
+        elif "Refresh token is not valid" in exp.message:
+            detail_msg = "Your password reset link is invalid or has expired. Please request a new one."
         else:
             detail_msg = "Failed to update password. Please try again."
             
