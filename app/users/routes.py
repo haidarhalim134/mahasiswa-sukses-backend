@@ -173,7 +173,7 @@ async def get_avatar(
         data = resp.content
 
     # cache stuff
-    etag = hashlib.md5(data).hexdigest()
+    etag = hashlib.sha512(data).hexdigest()
     if request.headers.get("if-none-match") == etag:
         return Response(status_code=304)
 
