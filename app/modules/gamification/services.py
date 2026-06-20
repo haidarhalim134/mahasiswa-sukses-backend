@@ -38,7 +38,7 @@ async def reset_quests_by_frequency(
     db: AsyncSession,
     frequency: QuestFrequency,
 ):
-    # TODO: missing potential scheduler error which can reset quest more times than necessary
+    # NOTE: missing potential scheduler error which can reset quest more times than necessary
     _ = await db.execute(
         update(UserQuest)
         .where(
@@ -63,95 +63,103 @@ async def progress_quest(
     """
     Progress quests based on event, for quest with cooldown first call will start the cooldown and the next call after cooldown will progress the quest
     """
-
     quest_defs = get_quest_def_by_event(event)
     now = datetime.now(timezone.utc)
 
     for qdef in quest_defs:
-        result = await db.execute(
-            select(UserQuest).where(
-                UserQuest.user_id == user.id,
-                UserQuest.quest_id == qdef["id"],
-            )
-        )
-        quest: UserQuest | None = result.scalar_one_or_none()
-
-        if not quest:
-            quest = UserQuest(
-                user_id=user.id,
-                quest_id=qdef["id"],
-                progress=0,
-                target=qdef["target"],
-                frequency=qdef["frequency"],
-            )
-            db.add(quest)
-            
+        quest = await _get_or_create_user_quest(db, user.id, qdef)
+        
         if quest.is_completed:
             continue
 
-        cooldown = None
-        if event ==  QuestEvent.STAY_10_MIN:
-            cooldown = 9
-        elif event == QuestEvent.STAY_1_HOUR:
-            cooldown = 55
-
         if event == QuestEvent.STAY_1_HOUR and quest.last_progress_at:
-            ten_min_qdef = get_quest_def_by_event(QuestEvent.STAY_10_MIN)[0]
-            
-            res_10 = await db.execute(
-                select(UserQuest).where(
-                    UserQuest.user_id == user.id,
-                    UserQuest.quest_id == ten_min_qdef["id"]
-                )
-            )
-            quest_10 = res_10.scalar_one_or_none()
-            
-            heartbeat_limit = 13 
-            if not quest_10 or not quest_10.last_progress_at:
-                is_continuous = False
-            else:
-                heartbeat_delta = now - quest_10.last_progress_at
-                is_continuous = (heartbeat_delta.total_seconds() / 60) <= heartbeat_limit
-
-            if not is_continuous:
+            if not await _check_is_continuous(db, user.id, now):
                 quest.last_progress_at = now
                 continue
 
-        if cooldown and quest.last_progress_at:
-            delta = now - quest.last_progress_at
-
-            minutes = int(delta.total_seconds() // 60)
-
-            # soft anticheat, need to wait 9 min before progressing
-            if minutes <= cooldown:
-                continue
+        if _is_on_cooldown(quest, event, now):
+            continue
         
-        # after first call, last_progress_at is set so the next call that go through can make progress
-        if (not cooldown or quest.last_progress_at) and not quest.is_completed:
+        if not _get_cooldown_minutes(event) or quest.last_progress_at:
             quest.progress += amount
 
         quest.last_progress_at = now
 
-        if not quest.is_completed and quest.progress >= quest.target:
-            quest.progress = quest.target
-            quest.is_completed = True
-            await add_xp(db, user, qdef["xp_reward"])
-            
-            history = QuestHistory(
-                user_id=user.id,
-                quest_id=qdef["id"],
-                title=qdef["title"],
-                xp_reward=qdef["xp_reward"],
-                completed_at=datetime.now(timezone.utc)
-            )
-
-            db.add(history)
-
-            # hook
-            await progress_achievement(db, user, QuestEvent.COMPLETE_QUEST)
+        if quest.progress >= quest.target:
+            await _handle_quest_completion(db, user, quest, qdef)
 
     await db.commit()
 
+# progress_quest helpers
+async def _get_or_create_user_quest(db: AsyncSession, user_id: int, qdef: dict) -> UserQuest:
+    result = await db.execute(
+        select(UserQuest).where(
+            UserQuest.user_id == user_id,
+            UserQuest.quest_id == qdef["id"],
+        )
+    )
+    quest = result.scalar_one_or_none()
+    if not quest:
+        quest = UserQuest(
+            user_id=user_id,
+            quest_id=qdef["id"],
+            progress=0,
+            target=qdef["target"],
+            frequency=qdef["frequency"],
+        )
+        db.add(quest)
+    return quest
+
+
+def _get_cooldown_minutes(event: QuestEvent) -> int | None:
+    if event == QuestEvent.STAY_10_MIN:
+        return 9
+    if event == QuestEvent.STAY_1_HOUR:
+        return 55
+    return None
+
+
+def _is_on_cooldown(quest: UserQuest, event: QuestEvent, now: datetime) -> bool:
+    cooldown = _get_cooldown_minutes(event)
+    if cooldown and quest.last_progress_at:
+        delta = now - quest.last_progress_at
+        minutes = int(delta.total_seconds() // 60)
+        return minutes <= cooldown
+    return False
+
+
+async def _check_is_continuous(db: AsyncSession, user_id: int, now: datetime) -> bool:
+    ten_min_qdef = get_quest_def_by_event(QuestEvent.STAY_10_MIN)[0]
+    res_10 = await db.execute(
+        select(UserQuest).where(
+            UserQuest.user_id == user_id,
+            UserQuest.quest_id == ten_min_qdef["id"]
+        )
+    )
+    quest_10 = res_10.scalar_one_or_none()
+    
+    if not quest_10 or not quest_10.last_progress_at:
+        return False
+        
+    heartbeat_delta = now - quest_10.last_progress_at
+    return (heartbeat_delta.total_seconds() / 60) <= 13
+
+
+async def _handle_quest_completion(db: AsyncSession, user: User, quest: UserQuest, qdef: dict):
+    quest.progress = quest.target
+    quest.is_completed = True
+    await add_xp(db, user, qdef["xp_reward"])
+    
+    history = QuestHistory(
+        user_id=user.id,
+        quest_id=qdef["id"],
+        title=qdef["title"],
+        xp_reward=qdef["xp_reward"],
+        completed_at=datetime.now(timezone.utc)
+    )
+    db.add(history)
+    await progress_achievement(db, user, QuestEvent.COMPLETE_QUEST)
+# progress_quest helpers
 
 async def get_user_quests(
     db: AsyncSession,
@@ -179,7 +187,6 @@ async def get_user_quests(
 
         progress = quest_map.get(qdef["id"])
 
-        id = progress.id if progress else -1
         current_progress = progress.progress if progress else 0
         is_completed = progress.is_completed if progress else False
 
@@ -299,11 +306,6 @@ async def get_user_achievements(
         progress_percentage = int((current_progress / adef["target"]) * 100)
 
         item = AchievementItem(
-            # title=adef["title"],
-            # description=adef["description"],
-            # xp_reward=adef["xp_reward"],
-            # difficulty=adef["difficulty"], 
-            # type=adef['type'],
             **adef,
             progress_percentage=progress_percentage,
             is_completed=is_completed,

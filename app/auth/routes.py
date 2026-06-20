@@ -82,7 +82,7 @@ async def update_password(data: UpdatePasswordRequest):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=detail_msg
         )
-    except:
+    except Exception as _:
         raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials."

@@ -10,6 +10,8 @@ from sqlmodel import ForeignKey, UUID
 from app.modules.community.schemas import ForumCategory
 from app.users.models import User
 
+USER_ID = "users.id"
+STUDY_ROOMS_ID = "study_rooms.id"
 
 class ForumPost(Base, table=True):
     __tablename__ = "forum_posts"
@@ -17,7 +19,7 @@ class ForumPost(Base, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
     author_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), nullable=False, index=True)
     )
     author: User = Relationship(
         sa_relationship_kwargs={
@@ -56,7 +58,7 @@ class Comment(Base, table=True):
     )
 
     author_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), nullable=False)
     )
     author: User = Relationship(
         sa_relationship_kwargs={
@@ -81,7 +83,7 @@ class PostLike(Base, table=True):
     )
 
     user_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True, nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), primary_key=True, nullable=False)
     )
 
     like: bool = Field(
@@ -99,7 +101,7 @@ class StudyRoom(Base, table=True):
     description: str = Field(sa_column=Column(String, nullable=False))
 
     author_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), nullable=False)
     )
     author: User = Relationship(
         sa_relationship_kwargs={
@@ -132,22 +134,22 @@ class StudyRoomParticipant(Base, table=True):
     __tablename__ = "study_room_participants"
 
     room_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("study_rooms.id"), primary_key=True, nullable=False)
+        sa_column=Column(Integer, ForeignKey(STUDY_ROOMS_ID), primary_key=True, nullable=False)
     )
 
     user_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True, nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), primary_key=True, nullable=False)
     )
 
 class StudyRoomLike(Base, table=True):
     __tablename__ = "study_room_likes"
 
     room_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("study_rooms.id"), primary_key=True, nullable=False, index=True)
+        sa_column=Column(Integer, ForeignKey(STUDY_ROOMS_ID), primary_key=True, nullable=False, index=True)
     )
 
     user_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True, nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), primary_key=True, nullable=False)
     )
 
 
@@ -157,11 +159,11 @@ class ChatMessage(Base, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
     room_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("study_rooms.id"), nullable=False, index=True)
+        sa_column=Column(Integer, ForeignKey(STUDY_ROOMS_ID), nullable=False, index=True)
     )
 
     author_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), nullable=False)
     )
     author: User = Relationship(
         sa_relationship_kwargs={
@@ -185,7 +187,7 @@ class RoomChatLike(Base, table=True):
     __tablename__ = "room_chat_likes"
 
     room_id: int = Field(
-        sa_column=Column(Integer, ForeignKey("study_rooms.id"), primary_key=True, nullable=False, index=True)
+        sa_column=Column(Integer, ForeignKey(STUDY_ROOMS_ID), primary_key=True, nullable=False, index=True)
     )
 
     chat_id: int = Field(
@@ -193,5 +195,5 @@ class RoomChatLike(Base, table=True):
     )
 
     user_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True, nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), primary_key=True, nullable=False)
     )

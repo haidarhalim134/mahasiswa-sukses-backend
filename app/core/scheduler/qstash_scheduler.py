@@ -7,13 +7,14 @@ from app.core.scheduler.base_scheduler import BaseScheduler
 
 qstash = QStash(settings.qstash_token)
 
+JSON_HEADERS = {"Content-Type": "application/json"}
 class QStashScheduler(BaseScheduler):
     def schedule_daily(self, task_data: TaskData, secret: str):
         qstash.schedule.create(
             destination=self.task_execute_url + f"?task_token={secret}",
             cron="0 0 * * *",
             body=task_data.model_dump_json(), 
-            headers={"Content-Type": "application/json"}, 
+            headers=JSON_HEADERS, 
             schedule_id=task_data.get_schedule_id(),
         )
 
@@ -22,7 +23,7 @@ class QStashScheduler(BaseScheduler):
             destination=self.task_execute_url + f"?task_token={secret}",
             cron="0 0 * * 0",
             body=task_data.model_dump_json(), 
-            headers={"Content-Type": "application/json"}, 
+            headers=JSON_HEADERS, 
             schedule_id=task_data.get_schedule_id(),
         )
 
@@ -30,6 +31,6 @@ class QStashScheduler(BaseScheduler):
         qstash.message.publish_json(
             url=self.task_execute_url + f"?task_token={secret}",
             body=task_data.model_dump_json(), 
-            headers={"Content-Type": "application/json"}, 
+            headers=JSON_HEADERS, 
             delay=delay_seconds,
         )

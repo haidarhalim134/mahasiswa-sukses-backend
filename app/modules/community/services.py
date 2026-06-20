@@ -30,7 +30,7 @@ from app.users.service import get_online_users_count, get_online_users_count_stm
 
 ## stats
 async def get_stats(db: AsyncSession) -> CommunityStats:
-    online_count_subquery = get_online_users_count_stmt(db).scalar_subquery()
+    online_count_subquery = get_online_users_count_stmt().scalar_subquery()
     rooms_count_subquery = (
         select(func.count())
         .where(StudyRoom.is_active == True)
@@ -102,13 +102,16 @@ async def get_post(db: AsyncSession, post_id: int, user_id: UUID) -> ForumPostRe
     row = result.first()
 
     if not row:
-        return None
+        raise HTTPException(
+            status_code=404,
+            detail="Post does not exist or deleted."
+        )
 
     return _build_post_response(*row)
 
 
 async def get_forum_feed(db: AsyncSession, params: ForumFeedParams, user_id: UUID) -> list[ForumPostRead]:
-    stmt = get_post_with_stats_stmt(user_id).order_by(desc(ForumPost.created_at)).where(ForumPost.deleted == False)
+    stmt = get_post_with_stats_stmt(user_id).order_by(desc(ForumPost.created_at))
 
     if params.tag:
         stmt = stmt.where(cast(ForumPost.tags, String).contains(params.tag))
@@ -145,7 +148,7 @@ def get_post_with_stats_stmt(user_id: UUID):
         likes_subq.label("likes_count"),
         comments_subq.label("comments_count"),
         is_liked_subq.label("is_liked")
-    )
+    ).where(ForumPost.deleted == False)
 
 def _build_post_response(post: ForumPost, likes_count, comments_count, is_liked):
     return ForumPostRead(
@@ -356,7 +359,7 @@ async def _build_room_response(db, room: StudyRoom, user_id) -> StudyRoomRead:
         )
     )
 
-    # TODO: doing this query twice for the join room function, possible optimization
+    # NOTE: doing this query twice for the join room function, possible optimization
     current_participant_count = await db.scalar(
         select(func.count()).where(StudyRoomParticipant.room_id == room.id)
     )
@@ -448,17 +451,17 @@ async def leave_room(db, user_id, room_id):
 async def get_messages(db, user_id, room_id, limit, before_id) -> list[ChatMessageRead]:
     await _check_study_room_membership(db, user_id, room_id)
 
-    ReplyAlias = aliased(ChatMessage)
+    reply_alias = aliased(ChatMessage)
 
     stmt = (
         select(
             ChatMessage, 
             func.count(RoomChatLike.chat_id).label("likes_count"),
-            func.count(ReplyAlias.id).label("reply_count"),
+            func.count(reply_alias.id).label("reply_count"),
             func.bool_or(RoomChatLike.user_id == user_id).label("is_liked")
         )
         .outerjoin(RoomChatLike, ChatMessage.id == RoomChatLike.chat_id)
-        .outerjoin(ReplyAlias, ChatMessage.id == ReplyAlias.replying_to)
+        .outerjoin(reply_alias, ChatMessage.id == reply_alias.replying_to)
         .where(ChatMessage.room_id == room_id)
         .group_by(ChatMessage.id)
     )

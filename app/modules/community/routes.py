@@ -38,7 +38,7 @@ async def get_community_stats(
 async def get_forum_feed(
     current_user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
-    params: ForumFeedParams = Depends(),
+    params: Annotated[ForumFeedParams, Depends()],
 ):
     """Endpoint untuk mengambil list postingan"""
     return await services.get_forum_feed(db, params, current_user_id)
@@ -83,7 +83,7 @@ async def comment_on_post(
     """Endpoint untuk mengomentari sebuah postingan"""
     comment =  await services.create_comment(db, current_user.id, post_id, payload)
 
-    # TODO: perhaps create helper function later that call both then make sure other calls are updated as well
+    # NOTE: perhaps create helper function later that call both then make sure other calls are updated as well
     # hook
     await progress_quest(db, current_user, QuestEvent.POST_COMMENT)
     await progress_achievement(db, current_user, QuestEvent.POST_COMMENT)
@@ -214,7 +214,7 @@ async def get_chat_history(
     room_id: int,
     current_user_id: Annotated[UUID, Depends(get_current_user_id)],
     db: Annotated[AsyncSession, Depends(get_db)],
-    limit: int = Query(50, ge=1, le=100),
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
     before_id: int | None = None,
 ):
     """

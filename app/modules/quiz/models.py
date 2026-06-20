@@ -86,7 +86,7 @@ class QuizAttempt(Base, table=True):
         sa_relationship_kwargs={"foreign_keys": "[QuizAttempt.user_id]"}
     )
 
-    # TODO: might no longer be necessary
+    # NOTE: might no longer be necessary
     status: QuizStatus = Field(
         sa_column=Column(String, nullable=False, default=QuizStatus.BERJALAN.value)
     )

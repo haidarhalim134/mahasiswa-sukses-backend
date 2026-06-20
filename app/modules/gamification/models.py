@@ -9,13 +9,14 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from app.modules.gamification.schemas import QuestFrequency, AchievementType
 
+USER_ID = "users.id"
 
 class UserQuest(Base, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
 
     user_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), index=True, nullable=False)
     )
 
     quest_id: str = Field(index=True, nullable=False)  
@@ -43,7 +44,7 @@ class UserAchievement(Base, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
     user_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True, nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), index=True, nullable=False)
     )
 
     achievement_id: str = Field(index=True, nullable=False)  
@@ -67,7 +68,7 @@ class QuestHistory(Base, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
     user_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), nullable=False)
     )
 
     quest_id: str = Field(nullable=False)
@@ -83,7 +84,7 @@ class AchievementHistory(Base, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
     user_id: uuid.UUID = Field(
-        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+        sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), nullable=False)
     )
 
     achievement_id: str = Field(nullable=False)

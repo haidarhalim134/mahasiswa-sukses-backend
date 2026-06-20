@@ -122,7 +122,7 @@ async def get_all_quizzes(db: AsyncSession, current_user: User) -> list[QuizOver
 async def start_quiz(db: AsyncSession, quiz_id: int, current_user: User) -> QuizStarting:
     quiz = await _get_quiz_or_404(db, quiz_id)
 
-    # TODO: just reset i think if user rejoined, end date etc
+    # NOTE: just reset i think if user rejoined, end date etc
     active_attempt = await _get_last_attempt(db, quiz_id, current_user.id)
     if active_attempt is None:
         active_attempt = QuizAttempt(
@@ -170,7 +170,7 @@ async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission
         print(attempt.started_at)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Quiz attempt closed",
+            detail="Quiz attempt closed",
         )
 
     questions = sorted(quiz.questions, key=lambda item: item.order_index)
@@ -184,10 +184,6 @@ async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission
     for question in questions:
         selected_option = submission.answers.get(question.id)
         if selected_option is None:
-            # raise HTTPException(
-            #     status_code=status.HTTP_400_BAD_REQUEST,
-            #     detail=f"Jawaban untuk pertanyaan {question.id} belum diisi",
-            # )
             continue
 
         is_correct = selected_option.value == question.correct_option
@@ -207,29 +203,9 @@ async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission
     passed = correct_answers >= quiz.minimum_score
     points_gained = quiz.xp_reward if passed else 0
 
-    streak_bonus = 0
-    streak_count = 0
+    streak_count, streak_bonus = 0, 0
     if passed:
-        stmt = (
-            select(QuizAttempt)
-            .where(
-                QuizAttempt.user_id == current_user.id,
-                QuizAttempt.submitted_at.is_not(None),
-                QuizAttempt.exited_at.is_(None),
-                QuizAttempt.id != attempt.id
-            )
-            .order_by(desc(QuizAttempt.submitted_at))
-        )
-        result = await db.execute(stmt)
-        past_attempts = result.scalars().all()
-
-        streak_count = 0
-        for past in past_attempts:
-            if past.passed:
-                streak_count += 1
-            else:
-                break
-        streak_bonus = streak_count * 10
+        streak_count, streak_bonus = await _calculate_streak_bonus(db, current_user.id, attempt.id)
 
     attempt.submitted_at = datetime.now(timezone.utc)
     attempt.correct_answers = correct_answers
@@ -256,6 +232,30 @@ async def submit_quiz(db: AsyncSession, quiz_id: int, submission: QuizSubmission
         certificate_id=attempt.certificate_id,
     )
 
+# submit_quiz helper
+async def _calculate_streak_bonus(db: AsyncSession, user_id, current_attempt_id) -> tuple[int, int]:
+    """Helper function to calculate streak count and streak bonus points."""
+    stmt = (
+        select(QuizAttempt)
+        .where(
+            QuizAttempt.user_id == user_id,
+            QuizAttempt.submitted_at.is_not(None),
+            QuizAttempt.exited_at.is_(None),
+            QuizAttempt.id != current_attempt_id
+        )
+        .order_by(desc(QuizAttempt.submitted_at))
+    )
+    result = await db.execute(stmt)
+    past_attempts = result.scalars().all()
+
+    streak_count = 0
+    for past in past_attempts:
+        if not past.passed:
+            break
+        streak_count += 1
+        
+    return streak_count, streak_count * 10
+# submit_quiz helper
 
 async def exit_quiz_early(db: AsyncSession, quiz_id: int, current_user: User) -> None:
     attempt = await _get_last_attempt_or_404(db, quiz_id, current_user.id)
@@ -335,7 +335,7 @@ def _question_to_read(question: QuizQuestion, current_number: int) -> QuestionRe
         option_d=question.option_d,
     )
 
-# TODO: move in case it is reusable elsewhere
+# NOTE: move in case it is reusable elsewhere
 def _format_date(dt):
     bulan = [
         "Januari", "Februari", "Maret", "April", "Mei", "Juni",

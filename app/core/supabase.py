@@ -6,7 +6,7 @@ supabase = create_client(
     settings.supabase_key
 )
 
-# TODO: supabase cleanup
+# NOTE: supabase cleanup
 def get_supabase():
     supabase = create_client(
         settings.supabase_url,

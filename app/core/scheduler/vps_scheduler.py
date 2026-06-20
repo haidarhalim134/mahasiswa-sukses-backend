@@ -8,13 +8,14 @@ from app.core.scheduler.base_scheduler import BaseScheduler
 scheduler = BackgroundScheduler()
 scheduler.start()
 
+JSON_HEADERS = {"Content-Type": "application/json"}
 class VPSScheduler(BaseScheduler):
     def schedule_daily(self, task_data: TaskData, secret: str):
         scheduler.add_job(
             lambda: requests.post(
                 url=self.task_execute_url + f"?task_token={secret}",
                 json=task_data.model_dump_json(),
-                headers={"Content-Type": "application/json"}, 
+                headers=JSON_HEADERS, 
             ),
             trigger="cron",
             hour=0,
@@ -28,7 +29,7 @@ class VPSScheduler(BaseScheduler):
             lambda: requests.post(
                 url=self.task_execute_url + f"?task_token={secret}",
                 json=task_data.model_dump_json(),
-                headers={"Content-Type": "application/json"}, 
+                headers=JSON_HEADERS, 
             ),
             trigger="cron",
             day_of_week="sun",
@@ -44,8 +45,8 @@ class VPSScheduler(BaseScheduler):
         scheduler.add_job(
             lambda: requests.post(
                 url=self.task_execute_url + f"?task_token={secret}",
-                json=task_data.model_dump_json()
-                headers={"Content-Type": "application/json"}, 
+                json=task_data.model_dump_json(),
+                headers=JSON_HEADERS, 
             ),
             trigger="date",
             run_date=run_time,

@@ -115,7 +115,6 @@ async def update_last_seen(
     await db.commit()
 
 def get_online_users_count_stmt(
-    db: AsyncSession,
     window_minutes: int = 10,
 ):
     threshold = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
@@ -129,7 +128,7 @@ async def get_online_users_count(
     db: AsyncSession,
     window_minutes: int = 10,
 ) -> int:
-    result = await db.scalar(get_online_users_count_stmt(db, window_minutes))
+    result = await db.scalar(get_online_users_count_stmt(window_minutes))
 
     return result or 0
 
@@ -161,7 +160,7 @@ async def update_profile_data(
         auth_updates["password"] = data.password
 
     if auth_updates:
-        # TODO: supabase cleanup
+        # NOTE: supabase cleanup
         get_supabase().auth.admin.update_user_by_id(str(user.id), auth_updates)
 
     # exclude none
@@ -170,7 +169,7 @@ async def update_profile_data(
     # remove password, handled by supabase
     update_data.pop("password", None)
 
-    # TODO: inconsistencies, might rather rename user_name to username
+    # NOTE: inconsistencies, might rather rename user_name to username
     if data.username:
         user.user_name = data.username
         update_data.pop("username", None)

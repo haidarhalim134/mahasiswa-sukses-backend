@@ -48,8 +48,6 @@ async def register_user(db: AsyncSession, data: RegisterRequest):
         birth_date=data.birth_date,
     )
 
-    return
-
 
 async def login_user(db: AsyncSession, data: LoginRequest):
 
@@ -100,8 +98,6 @@ def reset_password(email: str):
             "redirect_to": "https://mahasiswa-sukses-backend.vercel.app/api/v1/auth/reset-password-page"
         }
     )
-
-    return
 
 def refresh_access_token(refresh_token):
     session = supabase.auth.refresh_session(refresh_token)

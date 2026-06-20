@@ -30,7 +30,7 @@ class TaskCreate(TaskBase):
     @field_validator('deadline')
     @classmethod
     def deadline_must_be_in_future(cls, v: datetime) -> datetime:
-        # TODO: hardcoded timezone, not the best solution
+        # NOTE: hardcoded timezone, not the best solution
         ICT = timezone(timedelta(hours=7))
         if v.tzinfo is None:
             v = v.replace(tzinfo=ICT)

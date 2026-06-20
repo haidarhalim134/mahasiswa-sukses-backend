@@ -4,8 +4,8 @@ from .base_handler import BaseStorage
 
 
 def get_storage() -> BaseStorage:
-    # TODO: always true for now until migration
-    if settings.app_env == "serverless" or True:
+    # NOTE: always true for now until migration
+    if settings.app_env == "serverless":
         from .supabase_storage import SupabaseStorage
         return SupabaseStorage()
 

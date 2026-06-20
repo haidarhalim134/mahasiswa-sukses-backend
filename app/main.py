@@ -32,9 +32,10 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # scheduler = get_scheduler()
-    # scheduler.schedule_daily(QuestResetTask(frequency=QuestFrequency.DAILY), settings.task_token)
-    # scheduler.schedule_weekly(QuestResetTask(frequency=QuestFrequency.WEEKLY), settings.task_token)
+    if settings.app_env != "serverless":
+        scheduler = get_scheduler()
+        scheduler.schedule_daily(QuestResetTask(frequency=QuestFrequency.DAILY), settings.task_token)
+        scheduler.schedule_weekly(QuestResetTask(frequency=QuestFrequency.WEEKLY), settings.task_token)
     yield
 
 
@@ -132,25 +133,3 @@ app.include_router(friends.router)
 @app.get("/")
 async def health():
     return {"status": "ok"}
-
-
-@app.get("/api/v1/me", include_in_schema=False)
-async def get_profile(
-    current_user = Depends(get_current_user)
-):
-    return {
-        "message": "Authenticated user",
-        "user_id": str(current_user.id),
-        "email": current_user.email,
-        "role": current_user.role.name
-    }
-
-
-@app.get("/api/v1/admin/dashboard", include_in_schema=False)
-async def admin_dashboard(
-    current_user = Depends(require_user(role=Role.admin))
-):
-    return {
-        "message": "Admin access granted",
-        "admin_id": str(current_user.id)
-    }

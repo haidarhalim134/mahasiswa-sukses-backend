@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/v1/task", tags=["task"], include_in_schema=False
 async def execute_task(
     task_token: str,
     db: Annotated[AsyncSession, Depends(get_db)],
-    task_data: TaskData = Body(...),
+    task_data: Annotated[TaskData, Body(...)],
 ):
     if task_token != settings.task_token:
         raise HTTPException(
@@ -26,13 +26,7 @@ async def execute_task(
     match task_data.task_group:
         case TaskGroup.QUEST_RESET:
             await reset_quests_by_frequency(db, task_data.frequency)
-
-        case TaskGroup.QUIZ:
-            pass
-
-        case TaskGroup.NOTIFICATION:
-            pass
-
+            
         case _:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

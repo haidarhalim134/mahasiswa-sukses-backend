@@ -17,16 +17,17 @@ from app.users.service import get_user_by_id, update_profile_data, update_user_s
 
 router = APIRouter(prefix="/api/v1/user", tags=["user"])
 
+HTTP_401_UNAUTHORIZED = {"description": "Missing or invalid authentication token"}
+HTTP_404_NOT_FOUND = {"description": "Resource not found"}
 
-# @router.get("/stats", response_model=UserStats)
-# async def get_user_stats(
-#     current_user: Annotated[User, Depends(get_current_user)],
-# ):
-#     """Endpoint untuk mengambil data stats homescreen"""
-#     raise NotImplementedError
-
-
-@router.get("/profile", response_model=UserProfile)
+@router.get(
+    "/profile", 
+    response_model=UserProfile,
+    responses={
+        200: {"description": "Profile data successfully retrieved."},
+        401: HTTP_401_UNAUTHORIZED
+    }
+)
 async def get_my_profile(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
@@ -34,7 +35,15 @@ async def get_my_profile(
     return user_to_private_view(current_user)
 
 
-@router.post("/profile", response_model=UserProfile)
+@router.post(
+    "/profile", 
+    response_model=UserProfile,
+    responses={
+        200: {"description": "Profile data successfully updated."},
+        400: {"description": "Invalid input data format."},
+        401: HTTP_401_UNAUTHORIZED
+    }
+)
 async def update_profile(
     data: ProfileUpdate,
     current_user: Annotated[User, Depends(get_current_user)],
@@ -44,10 +53,18 @@ async def update_profile(
     return await update_profile_data(db, current_user, data)
 
 
-@router.post("/profile/avatar")
+@router.post(
+    "/profile/avatar",
+    status_code=204,
+    responses={
+        204: {"description": "Avatar successfully processed and uploaded. No content returned."},
+        400: {"description": "Uploaded file is not a valid image format."},
+        401: HTTP_401_UNAUTHORIZED
+    }
+)
 async def upload_avatar(
     current_user: Annotated[User, Depends(get_current_user)],
-    file: UploadFile = File(...),
+    file: Annotated[UploadFile, File(...)],
 ):
     """Endpoint untuk memperbarui avatar user. Menerima berbagai format gambar (`*.jpeg`, `*.png`, `*.webp`, dll.)"""
     if not file.content_type or not file.content_type.startswith("image/"):
@@ -86,7 +103,14 @@ async def upload_avatar(
     #     pass
 
 
-@router.post("/settings")
+@router.post(
+    "/settings",
+    responses={
+        200: {"description": "Settings successfully updated."},
+        400: {"description": "Invalid settings input data."},
+        401: HTTP_401_UNAUTHORIZED
+    }
+)
 async def update_settings(
     data: SettingsUpdate,
     current_user_id: Annotated[UUID, Depends(get_current_user_id)],
@@ -97,12 +121,23 @@ async def update_settings(
 
 @router.get(
     "/avatar/{user_id}",
-    responses = {
+    response_class=Response,
+    responses={
         200: {
-            "content": {"image/png": {}}
+            "content": {"image/webp": {}},
+            "description": "Returns the user avatar or a fallback generated avatar in WebP format."
+        },
+        304: {
+            "description": "Not Modified. Client's cached avatar is up to date (If cache mechanism is enabled)."
+        },
+        400: {
+            "description": "Avatar missing from storage and user's full name is unavailable to generate placeholder."
+        },
+        404: HTTP_404_NOT_FOUND,
+        502: {
+            "description": "Bad Gateway. Failed to fetch fallback placeholder avatar from external API."
         }
-    },
-    response_class=Response
+    }
 )
 async def get_avatar(
     user_id: UUID, 
@@ -138,15 +173,15 @@ async def get_avatar(
         data = resp.content
 
     # cache stuff
-    # etag = hashlib.md5(data).hexdigest()
-    # if request.headers.get("if-none-match") == etag:
-    #     return Response(status_code=304)
+    etag = hashlib.md5(data).hexdigest()
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=304)
 
     return Response(
         content=data,
         media_type="image/webp",
-        # headers={
-        #     "ETag": etag,
-        #     "Cache-Control": "public, s-maxage=5, stale-while-revalidate=3600"
-        # }
+        headers={
+            "ETag": etag,
+            "Cache-Control": "public, s-maxage=5, stale-while-revalidate=3600"
+        }
     )

@@ -1,7 +1,7 @@
 from io import BytesIO
 from uuid import UUID, uuid4
 import aiofiles
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from httpx import HTTPError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -12,7 +12,6 @@ from app.modules.certificate.models import Certificate
 from app.modules.certificate.schemas import CertificateItem, CertificateSource
 import httpx
 import asyncio
-# import cairosvg
 
 async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, category: str, source: CertificateSource, source_id: int, template_name: str, replaces: dict):
     async with aiofiles.open(f"app/templates/{template_name}", "r", encoding="utf-8") as f:
@@ -21,7 +20,7 @@ async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, c
     for key, val in replaces.items():
         svg = svg.replace(key, val)
 
-    # TODO: move to hybrid vps and vercel deployment handler as well maybe?
+    # NOTE: move to hybrid vps and vercel deployment handler as well maybe?
     file = None
 
     try:
@@ -62,13 +61,13 @@ async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, c
                     export_task = next(t for t in status_data["tasks"] if t["name"] == "export-pdf")
                     pdf_url = export_task["result"]["files"][0]["url"]
                 elif status_data["status"] == "error":
-                    raise Exception(f"CloudConvert Job Failed: {status_data}")
+                    raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"CloudConvert Job Failed: {status_data}")
 
             download_res = await client.get(pdf_url)
             download_res.raise_for_status()
             file = BytesIO(download_res.content)
 
-    except Exception as e:
+    except Exception as _:
         try:
             async with httpx.AsyncClient() as client:
                 FALLBACK_URL = "https://serv.gorgon-everest.ts.net/convert" 
@@ -84,16 +83,16 @@ async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, c
                 file = BytesIO(response.content)
                 
         except Exception as fallback_error:
-            raise Exception("Certificate generation completely failed. Both services are down.") from fallback_error
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR,"Certificate generation completely failed. Both services are down.") from fallback_error
 
     storage = get_storage()
 
-    id: str = str(uuid4())
-    path = f"{id}.pdf"
+    cert_id: str = str(uuid4())
+    path = f"{cert_id}.pdf"
     await storage.upload(file, Buckets.CERTIFICATE.value, path)
 
     certificate = Certificate(
-        id=id,
+        id=cert_id,
         user_id=awardee_id,
         source=source,
         source_id=source_id,
@@ -103,7 +102,7 @@ async def generate_certificate(db: AsyncSession, awardee_id: UUID, title: str, c
     db.add(certificate)
     await db.commit()
 
-    return id
+    return cert_id
 
 
 async def get_user_certificate(db: AsyncSession, user_id: UUID):

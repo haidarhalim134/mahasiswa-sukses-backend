@@ -45,7 +45,10 @@ async def create_task(
     return await create_task_service(db, task, current_user_id)
 
 
-@router.post("/tasks/{task_id}/update_progress/{progress}")
+@router.post(
+    "/tasks/{task_id}/update_progress/{progress}",
+    responses={404: {"description": "User not found"}}
+)
 async def update_task_progress(
     task_id: int,
     progress: TaskProgress,
@@ -55,7 +58,7 @@ async def update_task_progress(
     """Endpoint untuk memperbarui progress task"""
     task = await db.execute(
         select(Task)
-        .where(Task.id == task_id)
+        .where(Task.id == task_id, Task.user_id == current_user.id)
     )
     task = task.scalar_one_or_none()
     if not task:

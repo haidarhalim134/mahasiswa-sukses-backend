@@ -167,7 +167,7 @@ class User(Base, table=True):
 
     @property
     def is_online(self):
-        # TODO: potentialy take the online frame and move it into config file, have a look at online estimater on community module as well
+        # NOTE: potentialy take the online frame and move it into config file, have a look at online estimater on community module as well
         threshold = datetime.now(timezone.utc) - timedelta(minutes=10)
 
         if not self.last_seen_at:
