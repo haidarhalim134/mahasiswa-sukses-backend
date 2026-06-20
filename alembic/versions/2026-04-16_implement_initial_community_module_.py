@@ -18,6 +18,7 @@ down_revision: Union[str, Sequence[str], None] = '251a700ee9d7'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+USER_ID = "users.id"
 
 def upgrade() -> None:
     """Upgrade schema."""
@@ -29,7 +30,7 @@ def upgrade() -> None:
     sa.Column('content', sa.String(), nullable=False),
     sa.Column('tags', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['author_id'], ['users.id'], name=op.f('forum_posts_author_id_fkey')),
+    sa.ForeignKeyConstraint(['author_id'], [USER_ID], name=op.f('forum_posts_author_id_fkey')),
     sa.PrimaryKeyConstraint('id', name=op.f('forum_posts_pkey'))
     )
     op.create_index(op.f('forum_posts_author_id_idx'), 'forum_posts', ['author_id'], unique=False)
@@ -41,7 +42,7 @@ def upgrade() -> None:
     sa.Column('max_participants', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.Boolean(), server_default='true', nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['author_id'], ['users.id'], name=op.f('study_rooms_author_id_fkey')),
+    sa.ForeignKeyConstraint(['author_id'], [USER_ID], name=op.f('study_rooms_author_id_fkey')),
     sa.PrimaryKeyConstraint('id', name=op.f('study_rooms_pkey'))
     )
     op.create_table('forum_comments',
@@ -50,7 +51,7 @@ def upgrade() -> None:
     sa.Column('author_id', sa.UUID(), nullable=False),
     sa.Column('comment', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['author_id'], ['users.id'], name=op.f('forum_comments_author_id_fkey')),
+    sa.ForeignKeyConstraint(['author_id'], [USER_ID], name=op.f('forum_comments_author_id_fkey')),
     sa.ForeignKeyConstraint(['post_id'], ['forum_posts.id'], name=op.f('forum_comments_post_id_fkey')),
     sa.PrimaryKeyConstraint('id', name=op.f('forum_comments_pkey'))
     )
@@ -59,7 +60,7 @@ def upgrade() -> None:
     sa.Column('post_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.UUID(), nullable=False),
     sa.ForeignKeyConstraint(['post_id'], ['forum_posts.id'], name=op.f('forum_post_likes_post_id_fkey')),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('forum_post_likes_user_id_fkey')),
+    sa.ForeignKeyConstraint(['user_id'], [USER_ID], name=op.f('forum_post_likes_user_id_fkey')),
     sa.PrimaryKeyConstraint('post_id', 'user_id', name=op.f('forum_post_likes_pkey'))
     )
     op.create_index(op.f('forum_post_likes_post_id_idx'), 'forum_post_likes', ['post_id'], unique=False)
@@ -69,7 +70,7 @@ def upgrade() -> None:
     sa.Column('author_id', sa.UUID(), nullable=False),
     sa.Column('content', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['author_id'], ['users.id'], name=op.f('study_room_messages_author_id_fkey')),
+    sa.ForeignKeyConstraint(['author_id'], [USER_ID], name=op.f('study_room_messages_author_id_fkey')),
     sa.ForeignKeyConstraint(['room_id'], ['study_rooms.id'], name=op.f('study_room_messages_room_id_fkey')),
     sa.PrimaryKeyConstraint('id', name=op.f('study_room_messages_pkey'))
     )
@@ -78,7 +79,7 @@ def upgrade() -> None:
     sa.Column('room_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.UUID(), nullable=False),
     sa.ForeignKeyConstraint(['room_id'], ['study_rooms.id'], name=op.f('study_room_participants_room_id_fkey')),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('study_room_participants_user_id_fkey')),
+    sa.ForeignKeyConstraint(['user_id'], [USER_ID], name=op.f('study_room_participants_user_id_fkey')),
     sa.PrimaryKeyConstraint('room_id', 'user_id', name=op.f('study_room_participants_pkey'))
     )
 

@@ -11,7 +11,7 @@
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 800px; margin: auto; }
     input, textarea, button { margin: 5px 0; width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-    button { background-color: #1b8a5a; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button { background-color: black; color: white; border: none; cursor: pointer; font-weight: bold; }
     button:hover { background-color: #34b27b; }
     section { border: 1px solid #eee; padding: 20px; margin-bottom: 20px; border-radius: 12px; background: #fafafa; }
     pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; overflow-x: auto; border-radius: 8px; font-size: 13px; max-height: 400px; }
@@ -26,16 +26,26 @@
 
   <section>
     <h3>1. Config</h3>
+    
+    <label for="userName">Your Name:</label>
     <input id="userName" placeholder="Your Name (e.g. Alex)" value="User_1"/>
+    
+    <label for="token">Access Token:</label>
     <input id="token" placeholder="Access Token" value=""/>
+    
+    <label for="supabaseUrl">Supabase URL:</label>
     <input id="supabaseUrl" placeholder="Supabase URL" value="https://sxjbsufglwxkpkhshvyi.supabase.co"/>
+    
+    <label for="supabaseKey">Supabase Anon Key:</label>
     <input id="supabaseKey" placeholder="Supabase Anon Key" value="sb_publishable_dRXmXXP7AsaQn7V5vviYmQ_4f9fEyQx"/>
   </section>
 
   <section>
     <h3>2. Study Room</h3>
+    <label Reinvented for="roomId" style="display: block; margin-bottom: 5px; font-weight: bold;">Room ID:</label>
     <input id="roomId" placeholder="Room ID (UUID)" />
-    <div style="display: flex; gap: 10px;">
+    
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
         <button onclick="joinRoom()">Join Room</button>
         <button onclick="leaveRoom()" style="background: #ff4d4d;">Leave Room</button>
     </div>
@@ -47,6 +57,7 @@
 
   <section>
     <h3>3. Chat</h3>
+    <label for="chatMessage">Your Message:</label> 
     <textarea id="chatMessage" placeholder="Type a message..." oninput="sendTypingBroadcast()"></textarea>
     <button onclick="sendMessage()">Send Message</button>
   </section>

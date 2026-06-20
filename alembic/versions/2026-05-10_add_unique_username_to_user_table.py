@@ -24,7 +24,6 @@ def upgrade() -> None:
     # auto generate existing user username based on their fullname
     op.add_column('users', sa.Column('user_name', sqlmodel.sql.sqltypes.AutoString(), nullable=True))
     bind = op.get_bind()
-    session = sa.orm.Session(bind=bind)
     users = bind.execute(sa.text("SELECT id, full_name FROM users")).fetchall()
     
     used_usernames = set()

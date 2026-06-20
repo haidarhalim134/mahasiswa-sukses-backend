@@ -16,6 +16,7 @@ from app.modules.gamification.schemas import (
     AchievementType,
     HistoryItem,
     LeaderboardItem,
+    QuestDef,
     QuestFrequency,
     QuestEvent,
     QuestItem,
@@ -72,26 +73,38 @@ async def progress_quest(
         if quest.is_completed:
             continue
 
-        if event == QuestEvent.STAY_1_HOUR and quest.last_progress_at:
-            if not await _check_is_continuous(db, user.id, now):
-                quest.last_progress_at = now
-                continue
-
-        if _is_on_cooldown(quest, event, now):
-            continue
-        
-        if not _get_cooldown_minutes(event) or quest.last_progress_at:
-            quest.progress += amount
-
-        quest.last_progress_at = now
-
-        if quest.progress >= quest.target:
-            await _handle_quest_completion(db, user, quest, qdef)
+        # Extracted logic handles individual quest updates
+        await _update_quest_progress(db, user, quest, qdef, event, amount, now)
 
     await db.commit()
 
 # progress_quest helpers
-async def _get_or_create_user_quest(db: AsyncSession, user_id: int, qdef: dict) -> UserQuest:
+async def _update_quest_progress(
+    db: AsyncSession,
+    user: User,
+    quest: UserQuest,
+    qdef: QuestDef,
+    event: QuestEvent,
+    amount: int,
+    now: datetime,
+) -> None:
+    if event == QuestEvent.STAY_1_HOUR and quest.last_progress_at:
+        if not await _check_is_continuous(db, user.id, now):
+            quest.last_progress_at = now
+            return
+
+    if _is_on_cooldown(quest, event, now):
+        return
+    
+    if not _get_cooldown_minutes(event) or quest.last_progress_at:
+        quest.progress += amount
+
+    quest.last_progress_at = now
+
+    if quest.progress >= quest.target:
+        await _handle_quest_completion(db, user, quest, qdef)
+
+async def _get_or_create_user_quest(db: AsyncSession, user_id: UUID, qdef: QuestDef) -> UserQuest:
     result = await db.execute(
         select(UserQuest).where(
             UserQuest.user_id == user_id,
