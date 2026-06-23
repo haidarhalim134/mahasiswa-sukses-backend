@@ -1,5 +1,7 @@
+import json
 from uuid import UUID
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Request, status
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
@@ -48,6 +50,36 @@ async def register_user(db: AsyncSession, data: RegisterRequest):
         birth_date=data.birth_date,
     )
 
+
+async def get_login_data(request: Request) -> LoginRequest:
+    content_type = request.headers.get("content-type", "")
+
+    if "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+        form_data = await request.form()
+    
+        email_or_username = form_data.get("username") or form_data.get("email_or_username")
+        password = form_data.get("password")
+        
+        if not email_or_username or not password:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Missing username or password in form data"
+            )
+
+        return LoginRequest(email_or_username=email_or_username, password=password)
+
+    try:
+        body_bytes = await request.body()
+        if not body_bytes:
+            raise HTTPException(status_code=422, detail="Signature verification failed: Empty body")
+        
+        body_json = json.loads(body_bytes)
+        return LoginRequest(**body_json)
+    except (json.JSONDecodeError, ValidationError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid JSON or validation error: {str(e)}"
+        )
 
 async def login_user(db: AsyncSession, data: LoginRequest):
 

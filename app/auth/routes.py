@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from supabase import AuthApiError
 
 from app.auth.schemas import RegisterRequest, LoginRequest, ResetPasswordRequest, LoginResponse, TokenRefreshRequest, TokenRefreshResponse, UpdatePasswordRequest
-from app.auth.service import refresh_access_token, register_user, login_user, reset_password
+from app.auth.service import get_login_data, refresh_access_token, register_user, login_user, reset_password
 from app.db.session import get_db
 from app.modules.gamification.services import handle_daily_streak
 from app.users.models import User
@@ -28,7 +28,7 @@ async def register(
 
 @router.post("/login", response_model=LoginResponse)
 async def login(
-    data: LoginRequest,
+    data: Annotated[LoginRequest, Depends(get_login_data)],
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
