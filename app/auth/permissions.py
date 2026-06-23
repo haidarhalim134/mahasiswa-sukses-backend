@@ -14,7 +14,7 @@ from app.users.service import get_user_by_id
 from app.users.models import Role, User
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="https://mahasiswa-sukses-backend.vercel.app/api/v1/auth/login")
 
 def verify_supabase_token(token: str):
 
