@@ -16,7 +16,6 @@ class TaskPriority(str, Enum):
 
 class TaskProgress(str, Enum):
     TODO = "todo"
-    ON_PROGRESS = "proses"
     DONE = "selesai"
 
 class TaskBase(BaseModel):
