@@ -92,4 +92,5 @@ class StudyRoomRead(StudyRoomBase):
     is_active: bool = True
     created_at: datetime
     likes_count: int
+    comments_count: int
     is_liked: bool = False 

@@ -345,6 +345,10 @@ async def _build_room_response(db, room: StudyRoom, user_id) -> StudyRoomRead:
         select(func.count()).where(StudyRoomLike.room_id == room.id)
     )
 
+    comments_count = await db.scalar(
+        select(func.count()).where(ChatMessage.room_id == room.id)
+    )
+
     is_liked = await db.scalar(
         select(func.count()).where(
             StudyRoomLike.room_id == room.id,
@@ -373,6 +377,7 @@ async def _build_room_response(db, room: StudyRoom, user_id) -> StudyRoomRead:
         is_active=room.is_active,
         author=user_to_public_view(room.author),
         likes_count=likes_count or 0,
+        comments_count=comments_count,
         is_liked=bool(is_liked),
         current_participants=current_participant_count,
         max_participants=room.max_participants
