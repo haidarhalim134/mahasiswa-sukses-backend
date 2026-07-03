@@ -208,3 +208,12 @@ async def update_user_setting(
         )
         
     await db.commit()
+
+async def add_xp(
+    db: AsyncSession,
+    user: User,
+    amount: int,
+):
+    user.total_xp += amount
+
+    await db.commit()

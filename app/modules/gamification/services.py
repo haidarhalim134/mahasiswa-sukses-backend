@@ -25,7 +25,7 @@ from uuid import UUID
 
 from app.users.models import User
 from app.users.schemas import PublicUserView
-from app.users.service import get_user_by_id, user_to_public_view
+from app.users.service import get_user_by_id, user_to_public_view, add_xp as add_user_xp
 
 
 
@@ -334,7 +334,7 @@ async def add_xp(
     user: User,
     amount: int,
 ):
-    user.total_xp += amount
+    await add_user_xp(db, user, amount)
 
     await db.commit()
 
