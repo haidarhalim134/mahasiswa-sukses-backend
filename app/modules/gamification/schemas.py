@@ -15,6 +15,17 @@ class AchievementType(str, Enum):
     FORUM = "forum"
     STREAK = "streak"
 
+class QuestOnlyEvent(str, Enum):
+    USER_LOGIN = "user_login"
+    COMPLETE_TASK = "complete_task"
+    COMPLETE_QUEST = "complete_quest"
+    RECEIVE_LIKE = "receive_like"
+    STAY_1_HOUR = "stay_1_hour"
+    STAY_10_MIN = "stay_10_min"
+    POST_COMMENT = 'post_comment'
+    # post comment on a forum post in 'bantuan' category
+    POST_COMMENT_ON_HELP = 'post_comment_on_help'
+
 class QuestEvent(str, Enum):
     USER_LOGIN = "user_login"
     USER_LOGIN_STREAK = "user_login_streak"
@@ -101,7 +112,7 @@ class HistoryItem(BaseModel):
 class QuestCreate(BaseModel):
     title: str
     description: str
-    event: QuestEvent
+    event: QuestOnlyEvent
     target: int = 1
     difficulty: QuizDifficulty
     frequency: QuestFrequency
@@ -111,7 +122,7 @@ class QuestCreate(BaseModel):
 class QuestUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    event: Optional[QuestEvent] = None
+    event: Optional[QuestOnlyEvent] = None
     target: Optional[int] = None
     difficulty: Optional[QuizDifficulty] = None
     frequency: Optional[QuestFrequency] = None
