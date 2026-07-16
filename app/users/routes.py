@@ -1,21 +1,23 @@
+import asyncio
 from datetime import date, datetime, timedelta, timezone
 import hashlib
 import io
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional
 from PIL import Image
 from uuid import UUID
 from fastapi import APIRouter, File, HTTPException, Query, Request, Response, Security, UploadFile, Depends, status
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlmodel import func, select
+from sqlmodel import and_, func, select
 
 from app.auth.permissions import get_current_user, get_current_user_id, require_role
 from app.core.storage_handler import Buckets, get_storage
 from app.db.session import get_db
-from app.modules.quiz.models import QuizAttempt
+from app.modules.gamification.models import Quest
+from app.modules.quiz.models import Quiz, QuizAttempt, QuizQuestion
 from app.users.models import Role, User, UserLoginHistory
-from app.users.schemas import ProfileUpdate, QuizHistoryItem, SettingsUpdate, StudentDetailResponse, StudentListItemResponse, StudentListResponse, UserProfile, UserStats
+from app.users.schemas import DashboardDataResponse, DifficultyDistribution, ProfileUpdate, QuizHistoryItem, SettingsUpdate, StatCard, StudentDetailResponse, StudentListItemResponse, StudentListResponse, UserLeaderboard, UserProfile, UserStats
 from app.users.service import get_login_history_streak, get_user_by_id, update_profile_data, update_user_setting, user_to_private_view
 
 
@@ -342,4 +344,136 @@ async def get_student_detail(
         quiz_history=quiz_history_items, 
         
         last_updated=today
+    )
+
+@router.get("/admin/overview", response_model=DashboardDataResponse)
+async def admin_overview(
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Endpoint untuk mengambil data overview dashboard admin.
+    """
+    now = datetime.now(timezone.utc)
+    seven_days_ago = now - timedelta(days=7)
+    fourteen_days_ago = now - timedelta(days=14)
+
+    # 1. Definisikan semua query metrik dasar (Skema Baru)
+    # Catatan: total_active_users menggunakan asumsi filter status aktif jika ada di model Anda (misal: User.is_active == True)
+    # Jika tidak ada, silakan hapus clause .where() pada total_users_query.
+    total_users_query = select(func.count(User.id))
+    total_quizzes_query = select(func.count(Quiz.id))
+    active_quizzes_query = select(func.count(Quiz.id)).where(Quiz.is_active == True)
+    total_quests_query = select(func.count(Quest.id))
+    active_quests_query = select(func.count(Quest.id)).where(Quest.is_active == True)
+    
+    # 2. Query Metrik Submission (Ditambahkan filter .is_not(None) agar konsisten)
+    total_subs_query = select(func.count(QuizAttempt.id)).where(
+        QuizAttempt.submitted_at.is_not(None)
+    )
+    subs_this_week_query = select(func.count(QuizAttempt.id)).where(
+        and_(
+            QuizAttempt.submitted_at.is_not(None),
+            QuizAttempt.submitted_at >= seven_days_ago,
+            QuizAttempt.submitted_at <= now
+        )
+    )
+    subs_last_week_query = select(func.count(QuizAttempt.id)).where(
+        and_(
+            QuizAttempt.submitted_at.is_not(None),
+            QuizAttempt.submitted_at >= fourteen_days_ago,
+            QuizAttempt.submitted_at < seven_days_ago
+        )
+    )
+
+    # 3. Eksekusi query dasar secara PARALEL untuk memangkas latency database
+    (
+        res_users,
+        res_quizzes,
+        res_act_quizzes,
+        res_quests,
+        res_act_quests,
+        res_total_subs,
+        res_subs_this_week,
+        res_subs_last_week
+    ) = await asyncio.gather(
+        db.execute(total_users_query),
+        db.execute(total_quizzes_query),
+        db.execute(active_quizzes_query),
+        db.execute(total_quests_query),
+        db.execute(active_quests_query),
+        db.execute(total_subs_query),
+        db.execute(subs_this_week_query),
+        db.execute(subs_last_week_query)
+    )
+
+    # 4. Ambil hasil skalar
+    total_active_users = res_users.scalar_one_or_none() or 0
+    total_quizzes = res_quizzes.scalar_one_or_none() or 0
+    total_active_quizzes = res_act_quizzes.scalar_one_or_none() or 0
+    total_quests = res_quests.scalar_one_or_none() or 0
+    total_active_quests = res_act_quests.scalar_one_or_none() or 0
+    total_submissions_all = res_total_subs.scalar_one_or_none() or 0
+    subs_this_week = res_subs_this_week.scalar_one_or_none() or 0
+    subs_last_week = res_subs_last_week.scalar_one_or_none() or 0
+
+    # 5. Kalkulasi persentase tren kenaikan/penurunan
+    if subs_last_week > 0:
+        trend_percentage = round(((subs_this_week - subs_last_week) / subs_last_week) * 100, 2)
+    elif subs_this_week > 0:
+        trend_percentage = 100.0
+    else:
+        trend_percentage = 0.0
+
+    top_users_query = (
+
+select(User)
+
+.order_by(User.total_xp.desc())
+
+.limit(5)
+
+)
+
+    top_users_results = (await db.execute(top_users_query)).scalars().all()
+
+    top_users_list = []
+
+    for user in top_users_results:
+
+# Menggunakan property dynamic '.level' yang ada di model User Anda
+
+        top_users_list.append(
+
+UserLeaderboard(
+
+user_id=user.id,
+
+user_name=user.user_name,
+
+full_name=user.full_name,
+
+total_xp=user.total_xp,
+
+level=user.level
+
+)
+
+) 
+
+    # 6. Susun response sesuai dengan struktur DashboardDataResponse yang baru
+    return DashboardDataResponse(
+        total_active_users=total_active_users,
+        total_quizzes=total_quizzes,
+        total_active_quizzes=total_active_quizzes,
+        total_quests=total_quests,
+        total_active_quests=total_active_quests,
+        total_submissions=StatCard(
+            value=subs_this_week,
+            previous_value=subs_last_week,
+            trend_percentage=trend_percentage
+        ),
+        # Jika nanti ingin mengaktifkan kembali kolom di bawah, pastikan uncomment di schema dahulu:
+        # difficulty_distribution=difficulty_dist,
+        top_users=top_users_list
     )

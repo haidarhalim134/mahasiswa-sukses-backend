@@ -108,3 +108,32 @@ class StudentDetailResponse(BaseModel):
     quiz_history: list[QuizHistoryItem]
     
     last_updated: date
+
+## admin overview
+class StatCard(BaseModel):
+    value: int
+    previous_value: int
+    trend_percentage: Optional[float] = None 
+
+class DifficultyDistribution(BaseModel):
+    difficulty: str
+    count: int
+
+class UserLeaderboard(BaseModel):
+    user_id: UUID
+    user_name: str
+    full_name: str
+    total_xp: int
+    level: int
+
+class DashboardDataResponse(BaseModel):
+    total_active_users: int
+    total_quizzes: int
+    total_active_quizzes: int
+    total_quests: int
+    total_active_quests: int
+    total_submissions: StatCard
+    
+    # difficulty_distribution: list[DifficultyDistribution]
+    
+    top_users: list[UserLeaderboard]
