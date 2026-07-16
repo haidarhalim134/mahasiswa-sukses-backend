@@ -94,7 +94,9 @@ class QuestHistory(Base, table=True):
         sa_column=Column(UUID(as_uuid=True), ForeignKey(USER_ID), nullable=False)
     )
 
-    quest_id: str = Field(nullable=False)
+    quest_id: str = Field(
+        sa_column=Column(String, ForeignKey("quests.id", ondelete="CASCADE"), index=True, nullable=False)
+    )  
 
     title: str = Field(nullable=False)
     xp_reward: int = Field(nullable=False)
