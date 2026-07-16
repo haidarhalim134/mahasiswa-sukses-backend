@@ -19,6 +19,7 @@ from app.modules.quiz.schemas import (
     QuizCreate,
     QuizFullUpdate,
     QuizOverview,
+    QuizRaw,
     QuizResult,
     QuizStarting,
     QuizStatus,
@@ -347,12 +348,40 @@ def _format_date(dt):
 
 ## admin
 async def get_raw_quizzes_service(db: AsyncSession):
-    result = await db.execute(
-        select(Quiz).order_by(Quiz.created_at.desc())
+    # 1. Create a correlated subquery to count the related QuizQuestions
+    question_count_subquery = (
+        select(func.count(QuizQuestion.id))
+        .where(QuizQuestion.quiz_id == Quiz.id)
+        .scalar_subquery()
+        .label("question_count")
     )
+
+    # 2. Query the Quiz entity alongside the subquery count
+    statement = (
+        select(Quiz, question_count_subquery)
+        .order_by(Quiz.created_at.desc())
+    )
+
+    result = await db.execute(statement)
     
-    return result.scalars().all()
-    
+    quizzes_with_counts = []
+    for quiz, count in result.all():
+        quiz_data = QuizRaw(
+            id=quiz.id,
+            title=quiz.title,
+            category=quiz.category,
+            duration_minutes=quiz.duration_minutes,
+            minimum_score=quiz.minimum_score,
+            xp_reward=quiz.xp_reward,
+            difficulty=quiz.difficulty,
+            is_active=quiz.is_active,
+            created_at=quiz.created_at,
+            question_count=count 
+        )
+        quizzes_with_counts.append(quiz_data)
+
+    return quizzes_with_counts
+
 async def create_quiz_service(db: AsyncSession, quiz_data: QuizCreate):
     new_quiz = Quiz(
         title=quiz_data.title,

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.permissions import get_current_user, require_role
 from app.db.session import get_db
 from app.modules.quiz.models import Quiz
-from app.modules.quiz.schemas import GeneratedCertificate, QuestionRead, QuizCreate, QuizDetailResponse, QuizFullUpdate, QuizOverview, QuizResult, QuizStarting, QuizSubmission
+from app.modules.quiz.schemas import GeneratedCertificate, QuestionRead, QuizCreate, QuizDetailResponse, QuizFullUpdate, QuizOverview, QuizRaw, QuizResult, QuizStarting, QuizSubmission
 from app.modules.quiz.services import (
     create_quiz_service,
     delete_quiz_service,
@@ -86,7 +86,7 @@ async def generate_certificate(
     return await generate_certificate_service(db, quiz_id, current_user)
 
 ## admin
-@router.get("/get-raw-quiz", response_model=list[Quiz])
+@router.get("/get-raw-quiz", response_model=list[QuizRaw])
 async def get_raw_quizzes(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],

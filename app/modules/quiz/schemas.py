@@ -145,3 +145,15 @@ class QuizFullUpdate(BaseModel):
     difficulty: QuizDifficulty
     is_active: bool = True
     questions: List[QuestionUpdateBulk] = []
+
+class QuizRaw(BaseModel):
+    id: int
+    title: str
+    category: str
+    duration_minutes: int
+    minimum_score: int
+    xp_reward: int
+    difficulty: QuizDifficulty
+    is_active: bool
+    created_at: datetime
+    question_count: int
