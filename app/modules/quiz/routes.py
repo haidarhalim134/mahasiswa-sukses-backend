@@ -1,8 +1,8 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Security, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.permissions import get_current_user, require_user
+from app.auth.permissions import get_current_user, require_role
 from app.db.session import get_db
 from app.modules.quiz.schemas import GeneratedCertificate, QuestionRead, QuizCreate, QuizDetailResponse, QuizFullUpdate, QuizOverview, QuizResult, QuizStarting, QuizSubmission
 from app.modules.quiz.services import (
@@ -88,7 +88,7 @@ async def generate_certificate(
 async def create_quiz(
     quiz_data: QuizCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_user(role=Role.admin))],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
 ):
     """Endpoint untuk membuat kuis baru sekaligus dengan daftar pertanyaannya"""
     return await create_quiz_service(db, quiz_data)
@@ -112,7 +112,7 @@ async def update_quiz_full(
 async def get_quiz_detail(
     quiz_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_user(role=Role.admin))],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
 ):
     """Endpoint untuk mengambil detail kuis berdasarkan ID beserta pertanyaannya"""
     return await get_quiz_detail_service(db, quiz_id)
@@ -121,7 +121,7 @@ async def get_quiz_detail(
 async def delete_quiz(
     quiz_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_user(role=Role.admin))],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
 ):
     """Endpoint untuk menghapus kuis bersama pertanyaanya."""
     return await delete_quiz_service(db, quiz_id)
@@ -132,7 +132,7 @@ async def set_active(
     quiz_id: int,
     active: bool,
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_user(role=Role.admin))],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
 ):
     """Endpoint untuk menghapus kuis bersama pertanyaanya."""
     return await set_active_service(db, quiz_id, active)

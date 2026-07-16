@@ -1,7 +1,7 @@
 from typing import Annotated, List, Optional
 from uuid import UUID
 from fastapi import Depends, HTTPException, Request, Security, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +14,11 @@ from app.users.service import get_user_by_id
 from app.users.models import Role, User
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="https://mahasiswa-sukses-backend.vercel.app/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="https://mahasiswa-sukses-backend.vercel.app/api/v1/auth/login",
+    scopes={
+        "admin": "Admin administrative privileges to write and delete resources."
+    })
 
 def verify_supabase_token(token: str):
 
@@ -68,28 +72,22 @@ async def get_current_user(
     return current_user
 
 
-def require_user(
-    role: Optional[Role] = None,
-    roles: Optional[List[Role]] = None,
-    visibility: Visibility = Visibility.public,
-):
+def require_role(allowed_roles: List[Role]):
     def dependency(
-        current_user: Annotated[User, Depends(get_current_user)],  # authn handled here
-        user_id: Optional[str] = None,
+        security_scopes: SecurityScopes,
+        current_user: Annotated[User, Depends(get_current_user)],
     ) -> User:
+        # 1. Bypass check if they are a super admin
         if current_user.role == Role.admin:
             return current_user
 
-        if role and current_user.role != role:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role")
-
-        if roles and current_user.role not in roles:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role")
-
-        if visibility == Visibility.private:
-            if user_id and user_id != str(current_user.id):
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot access other users")
-
+        # 2. Check if user's role is in the allowed list
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Insufficient permissions"
+            )
+            
         return current_user
-
+        
     return dependency
