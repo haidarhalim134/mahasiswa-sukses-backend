@@ -85,15 +85,15 @@ async def generate_certificate(
     """Endpoint generate sertifikat untuk attempt quiz tertentu, mengembalikan certificate_id"""
     return await generate_certificate_service(db, quiz_id, current_user)
 
+## admin
 @router.get("/get-raw-quiz", response_model=list[Quiz])
 async def get_raw_quizzes(
     db: Annotated[AsyncSession, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
 ):
     """Endpoint untuk mengambil semua quiz termasuk yang non aktif """
     return await get_raw_quizzes_service(db)
 
-## admin
 @router.post("/", response_model=QuizDetailResponse)
 async def create_quiz(
     quiz_data: QuizCreate,

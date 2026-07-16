@@ -345,14 +345,14 @@ def _format_date(dt):
     ]
     return f"{dt.day} {bulan[dt.month - 1]} {dt.year}"
 
+## admin
 async def get_raw_quizzes_service(db: AsyncSession):
     result = await db.execute(
         select(Quiz).order_by(Quiz.created_at.desc())
     )
     
     return result.scalars().all()
-
-## admin
+    
 async def create_quiz_service(db: AsyncSession, quiz_data: QuizCreate):
     new_quiz = Quiz(
         title=quiz_data.title,
