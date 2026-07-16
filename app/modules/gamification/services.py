@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from fastapi import HTTPException, status
 from sqlalchemy import Case
 from sqlalchemy.engine.result import Result
 from typing import Any, Optional
@@ -9,17 +10,19 @@ from sqlmodel import and_, desc, func, or_, select, update
 
 from app.modules.friends.models import Friendship
 from app.modules.friends.schemas import FriendshipStatus
-from app.modules.gamification.gamification import ACHIEVEMENTS, QUESTS
-from app.modules.gamification.models import AchievementHistory, QuestHistory, UserAchievement, UserQuest
+from app.modules.gamification.gamification import ACHIEVEMENTS
+from app.modules.gamification.models import AchievementHistory, Quest, QuestHistory, UserAchievement, UserQuest
 from app.modules.gamification.schemas import (
     AchievementItem,
     AchievementType,
     HistoryItem,
     LeaderboardItem,
+    QuestCreate,
     QuestDef,
     QuestFrequency,
     QuestEvent,
     QuestItem,
+    QuestUpdate,
 )
 from uuid import UUID
 
@@ -29,8 +32,17 @@ from app.users.service import get_user_by_id, user_to_public_view, add_xp as add
 
 
 
-def get_quest_def_by_event(event: QuestEvent):
-    return [q for q in QUESTS if q["event"] == event]
+async def get_quests_by_event(db: AsyncSession, event: QuestEvent):
+    statement = select(Quest).where(Quest.event == event.value)
+    result = await db.execute(statement)
+    return result.scalars().all()
+
+async def get_quests_by_frequency(db: AsyncSession, frequency: Optional[QuestFrequency]):
+    statement = select(Quest)
+    if frequency:
+        statement = statement.where(Quest.frequency == frequency.value)
+    result = await db.execute(statement)
+    return result.scalars().all()
 
 def get_achievement_def_by_event(event: QuestEvent):
     return [q for q in ACHIEVEMENTS if q["event"] == event]
@@ -64,10 +76,12 @@ async def progress_quest(
     """
     Progress quests based on event, for quest with cooldown first call will start the cooldown and the next call after cooldown will progress the quest
     """
-    quest_defs = get_quest_def_by_event(event)
+    quest_defs = await get_quests_by_event(db, event)
     now = datetime.now(timezone.utc)
 
     for qdef in quest_defs:
+        if not qdef.is_active:
+            continue
         quest = await _get_or_create_user_quest(db, user.id, qdef)
         
         if quest.is_completed:
@@ -194,18 +208,17 @@ async def get_user_quests(
 
     items = []
 
-    for qdef in QUESTS:
-        if frequency and qdef['frequency'] != frequency:
+    for qdef in await get_quests_by_frequency(db, frequency):
+        if not qdef.is_active:
             continue
-
-        progress = quest_map.get(qdef["id"])
+        progress = quest_map.get(qdef.id)
 
         current_progress = progress.progress if progress else 0
         is_completed = progress.is_completed if progress else False
 
-        progress_percentage = int((current_progress / qdef["target"]) * 100)
+        progress_percentage = int((current_progress / qdef.target) * 100)
 
-        item = QuestItem(**qdef, is_completed=is_completed, progress_percentage=progress_percentage)
+        item = QuestItem(title=qdef.title, description=qdef.description, frequency=qdef.frequency, xp_reward=qdef.xp_reward, difficulty=qdef.difficulty, is_completed=is_completed, progress_percentage=progress_percentage)
 
         items.append(item)
 
@@ -517,3 +530,57 @@ async def get_user_history(
     history.sort(key=lambda x: x.completed_at, reverse=True)
 
     return history[:50]
+
+
+async def list_quests_service(db: AsyncSession, skip: int = 0, limit: int = 100):
+    query = select(Quest).offset(skip).limit(limit)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
+async def get_quest_service(quest_id: str, db: AsyncSession):
+    quest = await db.get(Quest, quest_id)
+    if not quest:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Quest not found"
+        )
+    return quest
+
+
+async def create_quest_service(payload: QuestCreate, db: AsyncSession):
+    new_quest = Quest(**payload.model_dump())
+    db.add(new_quest)
+    await db.commit()
+    await db.refresh(new_quest)
+    return new_quest
+
+
+async def set_active_service(quest_id: str, active: bool, db: AsyncSession):
+    quest = await get_quest_service(quest_id, db)  # Reusable check
+    
+    quest.is_active = active
+    db.add(quest)
+    await db.commit()
+    return
+
+
+async def update_quest_service(quest_id: str, payload: QuestUpdate, db: AsyncSession):
+    quest = await get_quest_service(quest_id, db)  # Reusable check
+    
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(quest, key, value)
+        
+    db.add(quest)
+    await db.commit()
+    await db.refresh(quest)
+    return quest
+
+
+async def delete_quest_service(quest_id: str, db: AsyncSession):
+    quest = await get_quest_service(quest_id, db)  # Reusable check
+    
+    await db.delete(quest)
+    await db.commit()
+    return

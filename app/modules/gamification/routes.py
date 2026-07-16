@@ -1,12 +1,13 @@
 from typing import Annotated
 from uuid import UUID
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.permissions import get_current_user, get_current_user_id
+from app.auth.permissions import get_current_user, get_current_user_id, require_role
 from app.db.session import get_db
-from app.modules.gamification.services import generate_friends_leaderboard, generate_leaderboard, get_user_achievements, get_user_history, get_user_quest_stats, get_user_quests, get_user_rank, progress_quest
-from app.users.models import User
+from app.modules.gamification.models import Quest
+from app.modules.gamification.services import create_quest_service, delete_quest_service, generate_friends_leaderboard, generate_leaderboard, get_quest_service, get_user_achievements, get_user_history, get_user_quest_stats, get_user_quests, get_user_rank, list_quests_service, progress_quest, set_active_service, update_quest_service
+from app.users.models import Role, User
 
 from app.modules.gamification.schemas import (
     AchievementItem,
@@ -14,9 +15,11 @@ from app.modules.gamification.schemas import (
     AchievementType,
     HistoryItem,
     LeaderboardPage,
+    QuestCreate,
     QuestEvent,
     QuestFrequency,
     QuestItem,
+    QuestUpdate,
 )
 from app.users.service import update_last_seen
 
@@ -119,3 +122,80 @@ async def heartbeat(
         db=db,
         user_id=current_user.id
     )
+
+## admin
+@router.get("/list-all", response_model=list[Quest])
+async def list_quests(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
+    skip: int = 0,
+    limit: int = 100,
+):
+    """
+    Endpoint untuk mengambil semua daftar quest yang ada di dalam sistem.
+    """
+    return await list_quests_service(db=db, skip=skip, limit=limit)
+
+
+@router.get("/get-one/{quest_id}", response_model=Quest)
+async def get_quest(
+    quest_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
+):
+    """
+    Endpoint untuk mengambil informasi detail dari satu quest spesifik berdasarkan quest_id.
+    """
+    return await get_quest_service(quest_id=quest_id, db=db)
+
+
+@router.post("/create", response_model=Quest)
+async def create_quest(
+    payload: QuestCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
+):
+    """
+    Endpoint untuk membuat dan menambahkan quest baru ke dalam database berdasarkan payload yang dikirim.
+    """
+    return await create_quest_service(payload=payload, db=db)
+
+
+@router.post("/{quest_id}/set-active")
+async def set_active(
+    quest_id: str,
+    active: bool,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
+):
+    """
+    Endpoint untuk mengaktifkan atau menonaktifkan status sebuah quest secara cepat tanpa mengubah data lainnya.
+    """
+    await set_active_service(quest_id=quest_id, active=active, db=db)
+    return
+
+
+@router.put("/{quest_id}", response_model=Quest)
+async def update_quest(
+    quest_id: str,
+    payload: QuestUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
+):
+    """
+    Endpoint untuk memperbarui data atau informasi pada quest yang sudah ada. Hanya bidang/field yang dikirim yang akan diperbarui.
+    """
+    return await update_quest_service(quest_id=quest_id, payload=payload, db=db)
+
+
+@router.delete("/{quest_id}")
+async def delete_quest(
+    quest_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
+):
+    """
+    Endpoint untuk menghapus data quest secara permanen dari database berdasarkan quest_id.
+    """
+    await delete_quest_service(quest_id=quest_id, db=db)
+    return

@@ -97,3 +97,23 @@ class HistoryItem(BaseModel):
     xp_reward: int
     type: str
     completed_at: datetime
+
+class QuestCreate(BaseModel):
+    title: str
+    description: str
+    event: QuestEvent
+    target: int = 1
+    difficulty: QuizDifficulty
+    frequency: QuestFrequency
+    xp_reward: int
+    is_active: bool = True
+
+class QuestUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    event: Optional[QuestEvent] = None
+    target: Optional[int] = None
+    difficulty: Optional[QuizDifficulty] = None
+    frequency: Optional[QuestFrequency] = None
+    xp_reward: Optional[int] = None
+    is_active: Optional[bool] = None

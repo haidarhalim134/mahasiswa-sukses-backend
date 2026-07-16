@@ -1,7 +1,7 @@
 from app.modules.gamification.schemas import AchievementDef, QuestDef, QuestEvent, QuestFrequency, AchievementType
 from app.modules.quiz.schemas import QuizDifficulty
 
-
+# sekarang sudah di db, list dibawah digunakan oleh seeder
 QUESTS: list[QuestDef] = [
     # daily
     {
