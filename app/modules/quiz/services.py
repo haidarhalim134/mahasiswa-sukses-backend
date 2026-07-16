@@ -16,6 +16,8 @@ from app.modules.quiz.models import Quiz, QuizAttempt, QuizAttemptAnswer, QuizQu
 from app.modules.quiz.schemas import (
     GeneratedCertificate,
     QuestionRead,
+    QuizCreate,
+    QuizFullUpdate,
     QuizOverview,
     QuizResult,
     QuizStarting,
@@ -342,3 +344,134 @@ def _format_date(dt):
         "Juli", "Agustus", "September", "Oktober", "November", "Desember"
     ]
     return f"{dt.day} {bulan[dt.month - 1]} {dt.year}"
+
+## admin
+async def create_quiz_service(db: AsyncSession, quiz_data: QuizCreate):
+    new_quiz = Quiz(
+        title=quiz_data.title,
+        category=quiz_data.category,
+        duration_minutes=quiz_data.duration_minutes,
+        minimum_score=quiz_data.minimum_score,
+        xp_reward=quiz_data.xp_reward,
+        difficulty=quiz_data.difficulty,
+        is_active=quiz_data.is_active
+    )
+    db.add(new_quiz)
+    await db.flush() # Mendapatkan ID kuis
+    
+    # Auto-imply order_index menggunakan enumerate (dimulai dari 1)
+    for index, q in enumerate(quiz_data.questions, start=1):
+        new_question = QuizQuestion(
+            quiz_id=new_quiz.id,
+            order_index=index,  # Di-imply otomatis di sini
+            text=q.text,
+            option_a=q.option_a,
+            option_b=q.option_b,
+            option_c=q.option_c,
+            option_d=q.option_d,
+            correct_option=q.correct_option
+        )
+        db.add(new_question)
+        
+    await db.commit()
+    
+    result = await db.execute(
+        select(Quiz).where(Quiz.id == new_quiz.id).options(selectinload(Quiz.questions))
+    )
+    return result.scalar_one()
+
+async def update_quiz_full_service(db: AsyncSession, quiz_id: int, quiz_data: QuizFullUpdate):
+    result = await db.execute(
+        select(Quiz).where(Quiz.id == quiz_id).options(selectinload(Quiz.questions))
+    )
+    quiz = result.scalar_one_or_none()
+    
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    # 1. Update info kuis utama
+    quiz.title = quiz_data.title
+    quiz.category = quiz_data.category
+    quiz.duration_minutes = quiz_data.duration_minutes
+    quiz.minimum_score = quiz_data.minimum_score
+    quiz.xp_reward = quiz_data.xp_reward
+    quiz.difficulty = quiz_data.difficulty
+    quiz.is_active = quiz_data.is_active
+
+    # Map pertanyaan lama di database {id: objek}
+    existing_questions = {q.id: q for q in quiz.questions}
+    incoming_question_ids = set()
+    
+    # 2. Sinkronisasi dengan dynamic order_index
+    for index, q_data in enumerate(quiz_data.questions, start=1):
+        if q_data.id and q_data.id in existing_questions:
+            # Kasus A: Update data lama + perbarui urutan posisinya (order_index)
+            question = existing_questions[q_data.id]
+            question.order_index = index
+            question.text = q_data.text
+            question.option_a = q_data.option_a
+            question.option_b = q_data.option_b
+            question.option_c = q_data.option_c
+            question.option_d = q_data.option_d
+            question.correct_option = q_data.correct_option
+            incoming_question_ids.add(q_data.id)
+        else:
+            # Kasus B: Buat data baru + tentukan urutan posisinya (order_index)
+            new_question = QuizQuestion(
+                quiz_id=quiz.id,
+                order_index=index,
+                text=q_data.text,
+                option_a=q_data.option_a,
+                option_b=q_data.option_b,
+                option_c=q_data.option_c,
+                option_d=q_data.option_d,
+                correct_option=q_data.correct_option
+            )
+            db.add(new_question)
+
+    # Kasus C: Hapus yang tidak dikirim di request
+    for old_id, old_question in existing_questions.items():
+        if old_id not in incoming_question_ids:
+            await db.delete(old_question)
+
+    await db.commit()
+    
+    # Ambil ulang data kuis segar dari DB
+    final_result = await db.execute(
+        select(Quiz).where(Quiz.id == quiz_id).options(selectinload(Quiz.questions))
+    )
+    return final_result.scalar_one()
+
+async def get_quiz_detail_service(db: AsyncSession, quiz_id: int):
+    result = await db.execute(
+        select(Quiz).where(Quiz.id == quiz_id).options(selectinload(Quiz.questions))
+    )
+    quiz = result.scalar_one_or_none()
+    
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    return quiz
+
+async def delete_quiz_service(db: AsyncSession, quiz_id: int):
+    result = await db.execute(select(Quiz).where(Quiz.id == quiz_id))
+    quiz = result.scalar_one_or_none()
+    
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+        
+    await db.delete(quiz)
+    await db.commit()
+    return None
+
+async def set_active_service(db: AsyncSession, quiz_id: int, new_is_active: bool):
+    result = await db.execute(
+        select(Quiz).where(Quiz.id == quiz_id).options(selectinload(Quiz.questions))
+    )
+    quiz = result.scalar_one_or_none()
+    
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    
+    quiz.is_active = new_is_active
+
+    await db.commit()

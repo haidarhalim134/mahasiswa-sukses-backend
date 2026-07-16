@@ -69,3 +69,79 @@ class QuizSummary(BaseModel):
 
 class GeneratedCertificate(BaseModel):
     certificate_id: str
+
+## admin
+class QuestionCreate(BaseModel):
+    text: str
+    option_a: str
+    option_b: str
+    option_c: str
+    option_d: str
+    correct_option: QuizOption
+
+class QuestionUpdate(BaseModel):
+    order_index: Optional[int] = None
+    text: Optional[str] = None
+    option_a: Optional[str] = None
+    option_b: Optional[Optional[str]] = None
+    option_c: Optional[str] = None
+    option_d: Optional[str] = None
+    correct_option: Optional[QuizOption] = None
+
+# Schema untuk membuat & mengedit Kuis
+class QuizCreate(BaseModel):
+    title: str
+    category: str
+    duration_minutes: int
+    minimum_score: int = 0
+    xp_reward: int = 0
+    difficulty: QuizDifficulty
+    is_active: bool = True
+    questions: List[QuestionCreate] = []
+
+class QuizUpdate(BaseModel):
+    title: Optional[str] = None
+    category: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    minimum_score: Optional[int] = None
+    xp_reward: Optional[int] = None
+    difficulty: Optional[QuizDifficulty] = None
+    is_active: Optional[bool] = None
+
+class QuestionDetailResponse(QuestionCreate):
+    id: int
+    order_index: int
+
+class QuizDetailResponse(BaseModel):
+    id: int
+    title: str
+    category: str
+    duration_minutes: int
+    minimum_score: int
+    xp_reward: int
+    difficulty: QuizDifficulty
+    is_active: bool
+    created_at: datetime
+    questions: List[QuestionDetailResponse]
+
+    class Config:
+        from_attributes = True
+
+class QuestionUpdateBulk(BaseModel):
+    id: Optional[int] = None 
+    text: str
+    option_a: str
+    option_b: str
+    option_c: str
+    option_d: str
+    correct_option: QuizOption
+
+class QuizFullUpdate(BaseModel):
+    title: str
+    category: str
+    duration_minutes: int
+    minimum_score: int = 0
+    xp_reward: int = 0
+    difficulty: QuizDifficulty
+    is_active: bool = True
+    questions: List[QuestionUpdateBulk] = []
