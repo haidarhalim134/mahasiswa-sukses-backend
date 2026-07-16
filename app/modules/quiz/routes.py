@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.permissions import get_current_user, require_role
 from app.db.session import get_db
+from app.modules.quiz.models import Quiz
 from app.modules.quiz.schemas import GeneratedCertificate, QuestionRead, QuizCreate, QuizDetailResponse, QuizFullUpdate, QuizOverview, QuizResult, QuizStarting, QuizSubmission
 from app.modules.quiz.services import (
     create_quiz_service,
@@ -11,6 +12,7 @@ from app.modules.quiz.services import (
     exit_quiz_early as exit_quiz_early_service,
     generate_quiz_certificate as generate_certificate_service,
     get_all_quizzes as get_all_quizzes_service,
+    get_raw_quizzes_service,
     get_quiz_detail_service,
     get_quiz_question as get_quiz_question_service,
     set_active_service,
@@ -82,6 +84,14 @@ async def generate_certificate(
 ):
     """Endpoint generate sertifikat untuk attempt quiz tertentu, mengembalikan certificate_id"""
     return await generate_certificate_service(db, quiz_id, current_user)
+
+@router.get("/get-raw-quiz", response_model=list[Quiz])
+async def get_raw_quizzes(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Endpoint untuk mengambil semua quiz termasuk yang non aktif """
+    return await get_raw_quizzes_service(db)
 
 ## admin
 @router.post("/", response_model=QuizDetailResponse)
