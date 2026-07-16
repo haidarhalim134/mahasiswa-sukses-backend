@@ -74,7 +74,8 @@ def user_to_public_view(user: User):
     return PublicUserView(
         id=user.id,
         username=user.user_name,
-        full_name=user.full_name
+        full_name=user.full_name,
+        role=user.role
     )
 
 def user_to_friend_view(user: User):
@@ -84,7 +85,8 @@ def user_to_friend_view(user: User):
         full_name=user.full_name,
         level=user.level,
         total_xp=user.total_xp,
-        online_status=user.is_online
+        online_status=user.is_online,
+        role=user.role
     )
 
 def user_to_private_view(user: User):

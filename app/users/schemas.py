@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
+from app.users.models import Role
+
 class UserStats(BaseModel):
     total_points: int
     ranking: int
@@ -24,6 +26,7 @@ class UserProfile(BaseModel):
     share_leaderboard_stats: Optional[bool] = None
     total_xp: Optional[int] = None
     current_level: Optional[int] = None
+    role: Role = Role.student
 
 class ProfileUpdate(BaseModel):
     username: Optional[str] = None
@@ -57,6 +60,7 @@ class PublicUserView(BaseModel):
     id: UUID
     username: str
     full_name: str
+    role: Role
 
 class FriendUserView(PublicUserView):
     level: int
