@@ -6,7 +6,7 @@ from enum import Enum
 
 from sqlalchemy import Column, String, Integer, DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import Field
+from sqlmodel import UUID, Field, ForeignKey
 
 from app.db.base import Base
 
@@ -173,3 +173,23 @@ class User(Base, table=True):
         if not self.last_seen_at:
             return False
         return self.last_seen_at > threshold
+
+class UserLoginHistory(Base, table=True):
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        index=True
+    )
+
+    user_id: uuid.UUID = Field(
+        sa_column=Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    )
+
+    date: datetime = Field(
+        default=None,
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=True
+        )
+    )

@@ -28,7 +28,7 @@ from uuid import UUID
 
 from app.users.models import User
 from app.users.schemas import PublicUserView
-from app.users.service import get_user_by_id, user_to_public_view, add_xp as add_user_xp
+from app.users.service import get_user_by_id, log_login_history, user_to_public_view, add_xp as add_user_xp
 
 
 
@@ -97,7 +97,7 @@ async def _update_quest_progress(
     db: AsyncSession,
     user: User,
     quest: UserQuest,
-    qdef: QuestDef,
+    qdef: Quest,
     event: QuestEvent,
     amount: int,
     now: datetime,
@@ -118,7 +118,7 @@ async def _update_quest_progress(
     if quest.progress >= quest.target:
         await _handle_quest_completion(db, user, quest, qdef)
 
-async def _get_or_create_user_quest(db: AsyncSession, user_id: UUID, qdef: QuestDef) -> UserQuest:
+async def _get_or_create_user_quest(db: AsyncSession, user_id: UUID, qdef: Quest) -> UserQuest:
     result = await db.execute(
         select(UserQuest).where(
             UserQuest.user_id == user_id,
@@ -129,10 +129,10 @@ async def _get_or_create_user_quest(db: AsyncSession, user_id: UUID, qdef: Quest
     if not quest:
         quest = UserQuest(
             user_id=user_id,
-            quest_id=qdef["id"],
+            quest_id=qdef.id,
             progress=0,
-            target=qdef["target"],
-            frequency=qdef["frequency"],
+            target=qdef.target,
+            frequency=qdef.frequency,
         )
         db.add(quest)
     return quest
@@ -360,6 +360,7 @@ async def handle_daily_streak(db: AsyncSession, user: User):
     updated = update_login_streak(user)
 
     if updated:
+        await log_login_history(db, user.id)
         await progress_quest(db, user, QuestEvent.USER_LOGIN)
         await progress_achievement(db, user, QuestEvent.USER_LOGIN)
 

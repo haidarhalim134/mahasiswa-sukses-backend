@@ -1,18 +1,22 @@
+from datetime import date, datetime, timedelta, timezone
 import hashlib
 import io
-from typing import Annotated
+from typing import Annotated, Optional
 from PIL import Image
 from uuid import UUID
-from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile, Depends
+from fastapi import APIRouter, File, HTTPException, Query, Request, Response, Security, UploadFile, Depends, status
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from sqlmodel import func, select
 
-from app.auth.permissions import get_current_user, get_current_user_id
+from app.auth.permissions import get_current_user, get_current_user_id, require_role
 from app.core.storage_handler import Buckets, get_storage
 from app.db.session import get_db
-from app.users.models import User
-from app.users.schemas import ProfileUpdate, SettingsUpdate, UserProfile, UserStats
-from app.users.service import get_user_by_id, update_profile_data, update_user_setting, user_to_private_view
+from app.modules.quiz.models import QuizAttempt
+from app.users.models import Role, User, UserLoginHistory
+from app.users.schemas import ProfileUpdate, QuizHistoryItem, SettingsUpdate, StudentDetailResponse, StudentListItemResponse, StudentListResponse, UserProfile, UserStats
+from app.users.service import get_login_history_streak, get_user_by_id, update_profile_data, update_user_setting, user_to_private_view
 
 
 router = APIRouter(prefix="/api/v1/user", tags=["user"])
@@ -184,4 +188,158 @@ async def get_avatar(
             "ETag": etag,
             "Cache-Control": "public, s-maxage=5, stale-while-revalidate=3600"
         }
+    )
+
+## admin
+@router.get("", response_model=StudentListResponse)
+async def get_students_list(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
+    search: Optional[str] = Query(None, description="Search by name or NIM"),
+):
+    """
+    Endpoint untuk mengambil list mahasiswa dengan view admin.
+    """
+    # Base query for Student
+    query = select(User).where(User.role == "student")
+    
+    if search:
+        # Search by name or NIM
+        query = query.where(
+            (User.full_name.ilike(f"%{search}%")) | 
+            (User.nim.ilike(f"%{search}%"))
+        )
+        
+    query = query.order_by(User.full_name.asc())
+    result = await db.execute(query)
+    students = result.scalars().all()
+    
+    students_data = []
+    for student in students:
+        # Get count of successfully submitted/finished quizzes
+        quiz_count_statement = (
+            select(func.count(QuizAttempt.id))
+            .where(QuizAttempt.user_id == student.id)
+            # Filter attempts where status is finished (submitted_at is present)
+            .where(QuizAttempt.submitted_at.isnot(None)) 
+        )
+        quiz_count_res = await db.execute(quiz_count_statement)
+        completed_quizzes = quiz_count_res.scalar() or 0
+        
+        students_data.append(
+            StudentListItemResponse(
+                id=student.id,
+                full_name=student.full_name,
+                total_xp=student.total_xp,
+                current_streak=student.current_streak,
+                total_quizzes_completed=completed_quizzes
+            )
+        )
+        
+    return StudentListResponse(
+        students=students_data,
+        total_found=len(students_data)
+    )
+
+
+@router.get("/{user_id}/detail", response_model=StudentDetailResponse)
+async def get_student_detail(
+    user_id: UUID,
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Endpoint untuk mengambil detail informasi admin untuk mahasiswa tertentu.
+    """
+    # 1. Fetch User details
+    user = await db.get(User, user_id)
+    if not user or user.role != "student":
+        raise HTTPException(
+            status_code=status.HTTP_404_RESOURCE_NOT_FOUND, 
+            detail="Student not found"
+        )
+        
+    # 2. Get 30 Days login history activity list
+    today = date.today()
+    activity_30_days = await get_login_history_streak(db, user_id, 30)
+    
+    # 3. Retrieve Quiz performance analytics
+    attempts_stmt = (
+        select(QuizAttempt)
+        .options(selectinload(QuizAttempt.quiz))
+        .where(QuizAttempt.user_id == user_id)
+        .where(QuizAttempt.submitted_at.isnot(None))
+        .order_by(QuizAttempt.submitted_at.desc()) # Keep newest attempts first as a tie-breaker
+    )
+    attempts_res = await db.execute(attempts_stmt)
+    all_attempts = attempts_res.scalars().all()
+    
+    # --- Deduplicate to keep only the HIGHEST score per quiz ---
+    best_attempts_by_quiz = {}
+    
+    for attempt in all_attempts:
+        # Calculate percentage score for this attempt
+        score = (attempt.correct_answers / attempt.total_questions) * 100 if attempt.total_questions > 0 else 0.0
+        
+        existing_best = best_attempts_by_quiz.get(attempt.quiz_id)
+        if existing_best is None:
+            # First time seeing this quiz, store it
+            best_attempts_by_quiz[attempt.quiz_id] = (attempt, score)
+        else:
+            existing_score = existing_best[1]
+            # If this attempt has a strictly higher score, replace the old one
+            if score > existing_score:
+                best_attempts_by_quiz[attempt.quiz_id] = (attempt, score)
+    
+    # Extract the filtered, highest-score attempts
+    best_attempts = [item[0] for item in best_attempts_by_quiz.values()]
+    best_scores = [item[1] for item in best_attempts_by_quiz.values()]
+    
+    total_quizzes = len(best_attempts)
+    
+    # Calculate Average Score (using only best scores)
+    avg_score = 0.0
+    if total_quizzes > 0:
+        avg_score = round(sum(best_scores) / total_quizzes, 1)
+        
+    # Build Quiz History (only highest score per quiz)
+    quiz_history_items = []
+    for att in best_attempts:
+        quiz_title = att.quiz.title if att.quiz else "Quiz" 
+        score_percentage = round((att.correct_answers / att.total_questions) * 100) if att.total_questions > 0 else 0
+        
+        quiz_history_items.append(
+            QuizHistoryItem(
+                quiz_title=quiz_title,
+                completed_date=att.submitted_at.date(),
+                score=score_percentage,
+                passed=att.passed
+            )
+        )
+        
+    # 4. Progress percentage helper calculation
+    xp_required = user.xp_required_for_this_milestone
+    progress_percentage = 0.0
+    if xp_required > 0:
+        progress_percentage = round((user.current_level_xp / xp_required) * 100, 1)
+
+    return StudentDetailResponse(
+        id=user.id,
+        full_name=user.full_name,
+        nim=user.nim,
+        current_level=user.level,
+        current_streak=user.current_streak,
+        
+        current_level_xp=user.current_level_xp,
+        xp_required_for_this_milestone=xp_required,
+        progress_percentage=progress_percentage,
+        
+        total_xp=user.total_xp,
+        total_quizzes_completed=total_quizzes,
+        average_score=avg_score,  
+        
+        activity_30_days=activity_30_days,
+        quiz_history=quiz_history_items, 
+        
+        last_updated=today
     )

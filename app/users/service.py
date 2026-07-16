@@ -9,7 +9,7 @@ from sqlmodel import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.supabase import get_supabase, supabase
-from app.users.models import User
+from app.users.models import User, UserLoginHistory
 from app.users.schemas import FriendUserView, ProfileUpdate, PublicUserView, SettingsUpdate, UserProfile
 
 
@@ -219,3 +219,40 @@ async def add_xp(
     user.total_xp += amount
 
     await db.commit()
+
+async def log_login_history(db: AsyncSession, user_id: UUID) -> UserLoginHistory:
+    new_entry = UserLoginHistory(
+        user_id=user_id,
+        date=datetime.now(timezone.utc)
+    )
+    db.add(new_entry)
+    await db.commit()
+    await db.refresh(new_entry)
+    return new_entry
+
+async def get_login_history_streak(
+        db: AsyncSession, 
+        user_id: UUID, 
+        days: int = 7
+    ) -> list[bool]:
+        today = date.today()
+        start_date = today - timedelta(days=days - 1)
+        
+        statement = (
+            select(UserLoginHistory.date)
+            .where(UserLoginHistory.user_id == user_id)
+            .where(UserLoginHistory.date >= datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc))
+            .order_by(UserLoginHistory.date.asc())
+        )
+        
+        result = await db.execute(statement)
+        login_records = result.scalars().all()
+        
+        logged_in_dates = {record.date() for record in login_records if record is not None}
+        
+        history_bools = []
+        for i in range(days):
+            current_check_date = start_date + timedelta(days=i)
+            history_bools.append(current_check_date in logged_in_dates)
+            
+        return history_bools

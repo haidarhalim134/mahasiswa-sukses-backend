@@ -66,3 +66,45 @@ class FriendUserView(PublicUserView):
     level: int
     total_xp: int
     online_status: bool
+
+## admin
+class StudentListItemResponse(BaseModel):
+    id: UUID
+    full_name: str
+    total_xp: int
+    current_streak: int  # e.g., 7 days
+    total_quizzes_completed: int  # e.g., 24
+    
+class StudentListResponse(BaseModel):
+    students: list[StudentListItemResponse]
+    total_found: int
+
+
+
+class QuizHistoryItem(BaseModel):
+    quiz_title: str
+    completed_date: date
+    score: int
+    passed: bool
+
+
+class StudentDetailResponse(BaseModel):
+    # Header Card
+    id: UUID
+    full_name: str
+    nim: Optional[str] = None
+    current_level: int
+    current_streak: int
+    
+    current_level_xp: int
+    xp_required_for_this_milestone: int
+    progress_percentage: float 
+    
+    total_xp: int
+    total_quizzes_completed: int
+    average_score: float 
+    activity_30_days: list[bool]
+    
+    quiz_history: list[QuizHistoryItem]
+    
+    last_updated: date
