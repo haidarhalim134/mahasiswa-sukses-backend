@@ -20,7 +20,7 @@ import app.modules.certificate.routes as certificate
 import app.modules.task.routes as task
 import app.modules.friends.routes as friends
 
-from app.auth.permissions import get_current_user, require_user
+from app.auth.permissions import get_current_user
 from app.core.config import settings
 from app.users.models import Role
 from dotenv import load_dotenv
