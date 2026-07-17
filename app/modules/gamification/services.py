@@ -122,7 +122,7 @@ async def _get_or_create_user_quest(db: AsyncSession, user_id: UUID, qdef: Quest
     result = await db.execute(
         select(UserQuest).where(
             UserQuest.user_id == user_id,
-            UserQuest.quest_id == qdef["id"],
+            UserQuest.quest_id == qdef.id,
         )
     )
     quest = result.scalar_one_or_none()
@@ -160,7 +160,7 @@ async def _check_is_continuous(db: AsyncSession, user_id: int, now: datetime) ->
     res_10 = await db.execute(
         select(UserQuest).where(
             UserQuest.user_id == user_id,
-            UserQuest.quest_id == ten_min_qdef["id"]
+            UserQuest.quest_id == ten_min_qdef.id
         )
     )
     quest_10 = res_10.scalar_one_or_none()
@@ -172,16 +172,16 @@ async def _check_is_continuous(db: AsyncSession, user_id: int, now: datetime) ->
     return (heartbeat_delta.total_seconds() / 60) <= 13
 
 
-async def _handle_quest_completion(db: AsyncSession, user: User, quest: UserQuest, qdef: dict):
+async def _handle_quest_completion(db: AsyncSession, user: User, quest: UserQuest, qdef: Quest):
     quest.progress = quest.target
     quest.is_completed = True
-    await add_xp(db, user, qdef["xp_reward"])
+    await add_xp(db, user, qdef.xp_reward)
     
     history = QuestHistory(
         user_id=user.id,
-        quest_id=qdef["id"],
-        title=qdef["title"],
-        xp_reward=qdef["xp_reward"],
+        quest_id=qdef.id,
+        title=qdef.title,
+        xp_reward=qdef.xp_reward,
         completed_at=datetime.now(timezone.utc)
     )
     db.add(history)
