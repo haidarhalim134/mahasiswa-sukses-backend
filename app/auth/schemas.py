@@ -86,3 +86,16 @@ class TokenRefreshRequest(BaseModel):
 class TokenRefreshResponse(BaseModel):
     access_token: str
     refresh_token: str
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=8)
+
+    @field_validator("new_password")
+    def validate_password_complexity(cls, v):
+        pattern = r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&_.]).{8,}$"
+        if not re.match(pattern, v):
+            raise ValueError(
+                "Password must contain at least one letter, one number, and one special character"
+            )
+        return v

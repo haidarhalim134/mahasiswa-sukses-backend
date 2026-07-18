@@ -1,14 +1,15 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, Response, HTTPException, status
+from fastapi import APIRouter, Depends, Response, HTTPException, Security, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from supabase import AuthApiError
 
-from app.auth.schemas import RegisterRequest, LoginRequest, ResetPasswordRequest, LoginResponse, TokenRefreshRequest, TokenRefreshResponse, UpdatePasswordRequest
-from app.auth.service import get_login_data, refresh_access_token, register_user, login_user, reset_password
+from app.auth.permissions import require_role
+from app.auth.schemas import ChangePasswordRequest, RegisterRequest, LoginRequest, ResetPasswordRequest, LoginResponse, TokenRefreshRequest, TokenRefreshResponse, UpdatePasswordRequest
+from app.auth.service import change_user_password, get_login_data, refresh_access_token, register_user, login_user, reset_password
 from app.db.session import get_db
 from app.modules.gamification.services import handle_daily_streak
-from app.users.models import User
+from app.users.models import Role, User
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -109,3 +110,14 @@ async def refresh_token(
     await handle_daily_streak(db, user)
 
     return token_response
+
+@router.post("/change-password")
+async def change_password(
+    data: ChangePasswordRequest,
+    current_user: Annotated[User, Security(require_role([Role.admin]), scopes=[Role.admin.value])],
+):
+    """
+    Page: Profiles Setting.
+    Endpoint untuk mengubah password dengan verifikasi password saat ini.
+    """
+    await change_user_password(current_user, data)

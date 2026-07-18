@@ -5,9 +5,10 @@ from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from app.auth.schemas import LoginRequest, LoginResponse, RegisterRequest, TokenRefreshResponse
+from app.auth.schemas import ChangePasswordRequest, LoginRequest, LoginResponse, RegisterRequest, TokenRefreshResponse
 from app.core.supabase import supabase
 from app.modules.gamification.services import handle_daily_streak
+from app.users.models import User
 from app.users.service import create_user_profile, get_user_by_email, get_user_by_id, get_user_by_username
 
 
@@ -145,3 +146,33 @@ def refresh_access_token(refresh_token):
         access_token=session.session.access_token,
         refresh_token=session.session.refresh_token,
     )
+
+async def change_user_password(user: User, data: ChangePasswordRequest):
+    try:
+        supabase.auth.sign_in_with_password(
+            {
+                "email": user.email,
+                "password": data.current_password
+            }
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect."
+        )
+
+    if data.current_password == data.new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password should be different from the old password."
+        )
+
+    try:
+        supabase.auth.update_user({
+            "password": data.new_password
+        })
+    except Exception as exp:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to update password: {str(exp)}"
+        )
