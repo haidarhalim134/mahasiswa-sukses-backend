@@ -39,6 +39,7 @@ class Quiz(Base, table=True):
         back_populates="quiz",
         sa_relationship_kwargs={
             "primaryjoin": "Quiz.id == QuizQuestion.quiz_id",
+            "cascade": "all, delete-orphan",
         },
     )
 
@@ -124,6 +125,7 @@ class QuizAttempt(Base, table=True):
         back_populates="attempt",
         sa_relationship_kwargs={
             "primaryjoin": "QuizAttempt.id == QuizAttemptAnswer.attempt_id",
+            "cascade": "all, delete-orphan",
         },
     )
 
