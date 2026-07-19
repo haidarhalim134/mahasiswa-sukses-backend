@@ -156,7 +156,7 @@ def _is_on_cooldown(quest: UserQuest, event: QuestEvent, now: datetime) -> bool:
 
 
 async def _check_is_continuous(db: AsyncSession, user_id: int, now: datetime) -> bool:
-    ten_min_qdef = get_quest_def_by_event(QuestEvent.STAY_10_MIN)[0]
+    ten_min_qdef = (await get_quests_by_event(db, QuestEvent.STAY_10_MIN))[0]
     res_10 = await db.execute(
         select(UserQuest).where(
             UserQuest.user_id == user_id,
